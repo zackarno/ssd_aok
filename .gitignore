@@ -41,3 +41,4 @@ vignettes/*.pdf
 /inputs/*
 !/inputs/.gitkeep
 /product_related/*
+.Rproj.user

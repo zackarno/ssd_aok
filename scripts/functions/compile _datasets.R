@@ -1,4 +1,6 @@
 library(dplyr)
+library(sf)
+library(stringr)
 # detach("packages:butteR")
 # butteR::extract_sm_option_columns
 
@@ -62,7 +64,7 @@ aok_settlements_missing<-df4 %>% anti_join( settlements, by= "settlement_county_
 settlements$NAMEJOIN
 settlements$NAMECOUNTY
 settlements$NAME
-library(stringr)
+
 
 aok_settlements_missing %>% nrow()
 fuzzy_join<-fuzzyjoin::stringdist_join(aok_settlements_missing%>% select(X_uuid, info_settlement_final,info_county,  settlement_county_sanitized), settlements%>% select(NAME, NAMEJOIN, NAMECOUNTY,settlement_county_sanitized), by = NULL, max_dist = 2, method = c("osa","lv", "dl", "hamming", "lcs", "qgram", "cosine", "jaccard", "jw","soundex"), mode = "inner", ignore_case = FALSE,distance_col = "string_dist")
@@ -78,7 +80,7 @@ new_settlements_ao_sf<- sf::st_as_sf(new_settlements_ao, coords= c("Longitude","
 settlements_spatial_full<-settlements %>% filter(!is.na(X) & !is.na(Y))
 nrow(settlements_spatial_full); nrow(settlements)
 settlements_sf<- sf::st_as_sf(settlements_spatial_full, coords=c("X", "Y"), crs=4326)
-library(sf)
+
 
 
 debugonce(butteR::closest_distance_rtree)
