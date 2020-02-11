@@ -43,5 +43,6 @@ vignettes/*.pdf
 /outputs/*
 !/outputs/.gitkeep
 /product_related/*
-.Rproj.user
 /cleaning_log/*
+
+.Rproj.user
