@@ -9,7 +9,9 @@ source("scripts/functions/aok_aggregation_functions.R")
 
 compilation_date<- Sys.Date() %>% str_replace_all("-","_")
 compiled_file_name<- paste0(compilation_date,"_","reach_ssd_aok_clean_data_compiled.csv")
-
+iso_date<- Sys.Date() %>%  str_replace_all("-","_")
+aggregated_file_name<- paste0("outputs/", iso_date,"_reach_ssd_aok_data_analysis_basic_JAN2020_Data.csv")
+current_month<- "2020-01-01"
 # read in and compile all csvs --------------------------------------------
 
 input_csv_folder<- "inputs/2020_01/2020_01_base_csvs"
@@ -20,13 +22,16 @@ csv_list<-purrr:::map(csv_list, function(x){
   index<-colnames(x) %in% c("Entry", "entry",".entry")==FALSE
   x[,index]})
 
+
 df<-data.table::rbindlist(csv_list, fill=TRUE) %>% data.frame()
 df2<-df %>% select_if(~!all(is.na(.)))
 
-df2$all_blanks <- apply(df2, 1, function(x) all(is.na(x)))
-df3<-filter(df2, all_blanks==FALSE)
-# write.csv(df3, "inputs/2020_01/checking_if_AO_messed_up_cols.csv")
-df3<-df3 %>% select("start_time":"X_submission_time")
+df3<-df2 %>% filter(!is.na(A.base))
+write.csv(df3, "inputs/2020_01/checking_if_AO_messed_up_cols.csv")
+
+
+
+
 
 
 # remove grouper for ease -------------------------------------------------
@@ -54,17 +59,28 @@ df4[,colnames(df_just_sm)]<-df_just_sm
 
 # write out compiled csv for use later ------------------------------------
 
-d.f <- df4
-colnames(d.f)<-colname_table$with_group
-write.csv(d.f,paste0("inputs/2020_01/", compiled_file_name))
+df5 <- df4
+colnames(df5)<-colname_table$with_group
+# write.csv(df5,paste0("inputs/2020_01/", compiled_file_name))
 
 
 # read in previous round and see whats been added to new tool ------------
 
 #ONCE THE COMPILED DATA SET AOK SETTLEMENTS HAVE BEEN FIXED - READ IT IN
-d.f<-read.csv("inputs/2020_01/REACH_SSD_AoK_January2020_duku.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
-df$D.info_county <-df$D.info_county
+df_settlements_fixed<-read.csv("inputs/2020_01/REACH_SSD_AoK_January2020_duku.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
 
+#akobo were not included initiaal aggregation
+
+df_akobo_renk<- df5 %>% filter(A.base%in% c("akobo", "renk"))
+
+d.f<-bind_rows(list(df_settlements_fixed,df_akobo_renk))
+
+
+d.f$D.info_county <-df$D.info_county %>% trimws()
+d.f$D.info_settlement_final<-d.f$D.info_settlement_final %>% trimws()
+
+#ALL NA'S should be fixed - Renk forgot to map Moldooch so we will cut it
+d.f<-d.f %>% filter(is.na(D.info_settlement_other))
 previous_round_compiled<- read.csv("inputs/2020_01//REACH_SSD_AoK_CleanedDataset_December2019.csv")
 new_columns_added_from_last_round<-colnames(d.f)[colnames(d.f) %in% colnames(previous_round_compiled) ==FALSE]
 
@@ -99,7 +115,7 @@ essential_cols<-c("D.info_state", "D.info_county", "D.info_settlement")
 
 # APPLY AOK YES FUNCTION --------------------------------------------------
 new_columns_added_from_last_round %>% dput()
-new_aok_yes_cols
+
 
 yes_analysis_added_2020_01<-c("U.market_safety","L.current_activities.pole_selling",
                               "L.current_activities.livestock", "L.current_activities.remittances",
@@ -421,10 +437,10 @@ settlement$L.harvest_worse[settlement$L.harvest_perception != "worse"] <- "SL"
 
 
 ## No health
-settlement$I.health_dist[settlement$I.health_now != "yes"] <- "SL"
+# settlement$I.health_dist[settlement$I.health_now != "yes"] <- "SL"
 
 ## Yes health
-settlement$I.health_no_reason1[settlement$I.health_now != "no"] <- "SL"
+# settlement$I.health_no_reason1[settlement$I.health_now != "no"] <- "SL"
 
 ## No IDP (protection)
 settlement$N.comm_relations[settlement$F.idp_now != "yes"] <- "SL"
@@ -434,7 +450,7 @@ settlement$S.shock_arrival[settlement$F.idp_now != "yes" & settlement$F.hcdisp_n
 settlement$S.shock_hunger[settlement$G.food_now != "no"] <- "SL"
 
 #NOT IN  NEW DATA SET
-settlement$S.shock_cerial_price[settlement$U.cerial_price_increase != "yes"] <- "SL"
+# settlement$S.shock_cerial_price[settlement$U.cerial_price_increase != "yes"] <- "SL"
 #settlement$S.shock_livestock[settlement$L.livestock_disease != "yes"] <- "SL"
 settlement$S.shock_protection[settlement$N.prot_incidence != "yes" & settlement$N.prot_looting != "yes"] <- "SL"
 
@@ -452,6 +468,7 @@ settlement$J.shelter_open_yn[settlement$F.idp_now != "yes"] <- "SL"
 settlement$J.shelter_open[settlement$J.shelter_open_yn != "yes"] <- "SL"
 
 
+
 #returnees shelter info
 settlement$J.j3.returnee_shelter_type1[settlement$F.hcdisp_now != "yes"] <- "SL"
 settlement$J.j3.returnee_location[settlement$F.hcdisp_now != "yes"] <- "SL"
@@ -465,24 +482,36 @@ settlement$J.nfi_need1[settlement$F.idp_now != "yes"] <- "SL"
 
 ##Markets
 
-settlement$U.market_where_food[settlement$U.market_now != "yes_same"& settlement$U.market_now != "yes_other"] <- "SL"
-settlement$U.cereal_market_county[settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
-settlement$U.cereal_market_sett[settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
+settlement$U.market_where_food[settlement$U.market_now != "yes"] <- "SL"
+settlement$U.cereal_market_county[settlement$U.market_now != "yes" ] <- "SL"
+settlement$U.cereal_market_sett[settlement$U.market_now != "yes" ] <- "SL"
 
 #not in the data
 # settlement$U.cereal_market_type[settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
 
 
-settlement$U.market_where_nfi[settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
-settlement$U.nfi_market_county [settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
-settlement$U.nfi_market_sett [settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
+settlement$U.market_where_nfi[settlement$U.market_now != "yes"] <- "SL"
+settlement$U.nfi_market_county [settlement$U.market_now != "yes"] <- "SL"
+settlement$U.nfi_market_sett [settlement$U.market_now != "yes"] <- "SL"
 
 
 # settlement$U.nfi_market_type [settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
 
 
-settlement$U.market_now_time [settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
+settlement$U.market_now_time [settlement$U.market_now != "yes"] <- "SL"
 
+U.market_now_barriers_at_cols<-c(settlement %>%ungroup() %>%  select(starts_with("U.market_now_barriers_at")) %>% colnames(),"U.market_now")
+
+market_component_df<-settlement[,U.market_now_barriers_at_cols]
+market_component_df<-purrr::map_df(market_component_df, function(x)ifelse(market_component_df$U.market_now!="yes","SL",x))
+settlement[,colnames(market_component_df)]<-market_component_df
+
+
+
+
+
+
+#DOESNT EXIST ANYMORE
 # settlement$U.cerial_price_increase[settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
 
 
@@ -519,8 +548,9 @@ settlement$R.idp_supported[settlement$F.idp_now != "yes"] <- "SL"
 settlement$R.idp_leadership[settlement$F.idp_now != "yes" | settlement$R.community_leadership != "yes"] <- "SL"
 
 
+
 ## No mines/UXOs
-settlement$O.mine_areas[settlement$O.mines != "yes"] <- "SL"
+# settlement$O.mine_areas[settlement$O.mines != "yes"] <- "SL"
 settlement$O.mine_areas.housing[settlement$O.mines != "yes"] <- "SL"
 settlement$O.mine_areas.school[settlement$O.mines != "yes"] <- "SL"
 settlement$O.mine_areas.medical[settlement$O.mines != "yes"] <- "SL"
@@ -536,23 +566,24 @@ settlement$O.mine_areas.dontknow[settlement$O.mines != "yes"] <- "SL"
 settlement$O.mine_acc_numb[settlement$O.mines != "yes"] <- "SL"
 
 
-#AAP
 
-settlement$Q.most_relevant [settlement$Q.assistance_now != "yes"] <- "SL"
-settlement$Q.ha_satisfied [settlement$Q.assistance_now != "yes"] <- "SL"
-settlement$Q.not_satisfied_reason [(settlement$Q.ha_satisfied != "no") | (settlement$Q.assistance_now != "yes")] <- "SL"
-
-settlement %>% mutate(asdf= ifelse(Q.ha_satisfied!="no" & Q.assistance_now != "yes", "SL",Q.not_satisfied_reason)) %>% select(Q.ha_satisfied,Q.assistance_now,asdf) %>% data.frame()
-
-settlement$Q.ha_inkind [settlement$Q.ha_type_acquire != "in_kind"] <- "SL"
-settlement$Q.ha_cash [settlement$Q.ha_type_acquire != "cash"] <- "SL"
-settlement$Q.ha_voucher [settlement$Q.ha_type_acquire != "vouchers"] <- "SL"
-settlement$Q.complaint_awareness [settlement$Q.assistance_now != "yes"] <- "SL"
-settlement$Q.ha_protection_concern [settlement$Q.assistance_now != "yes"] <- "SL"
-settlement$Q.ha_fear [(settlement$Q.assistance_now != "yes") | (settlement$Q.ha_protection_concern != "yes")] <- "SL"
+# AAP - skipping for Jan --------------------------------------------------
 
 
-
+# settlement$Q.most_relevant [settlement$Q.assistance_now != "yes"] <- "SL"
+# settlement$Q.ha_satisfied [settlement$Q.assistance_now != "yes"] <- "SL"
+# settlement$Q.not_satisfied_reason [(settlement$Q.ha_satisfied != "no") | (settlement$Q.assistance_now != "yes")] <- "SL"
+#
+# settlement %>% mutate(asdf= ifelse(Q.ha_satisfied!="no" & Q.assistance_now != "yes", "SL",Q.not_satisfied_reason)) %>% select(Q.ha_satisfied,Q.assistance_now,asdf) %>% data.frame()
+#
+#
+# [settlement$Q.ha_type_acquire != "in_kind"] <- "SL"
+# settlement$Q.ha_cash [settlement$Q.ha_type_acquire != "cash"] <- "SL"
+# settlement$Q.ha_voucher [settlement$Q.ha_type_acquire != "vouchers"] <- "SL"
+# settlement$Q.complaint_awareness [settlement$Q.assistance_now != "yes"] <- "SL"
+#
+# [settlement$Q.assistance_now != "yes"] <- "SL"
+# settlement$Q.ha_fear [(settlement$Q.assistance_now != "yes") | (settlement$Q.ha_protection_concern != "yes")] <- "SL""
 
 ## Filling in all blank values
 
@@ -573,16 +604,16 @@ settlement <- settlement %>%
   mutate(D.ki_coverage = as.numeric(ki_coverage$`length(B.disp_status)`)) %>%
   select(D.info_state, D.info_county, D.info_settlement, D.settlecounty, D.ki_coverage, everything())
 
-settlement<- rename(settlement,G.market_now = U.market_now, G.cerial_price_increase = U.cerial_price_increase)
+settlement<- rename(settlement,G.market_now = U.market_now)
 
 
 ## Adding KI coverage and month columns
 
-settlement <- add_column(as.data.frame(settlement), month = rep(CURRENT_MONTH, len = nrow(settlement)), .before = 1)
+settlement <- tibble::add_column(as.data.frame(settlement), month = rep(current_month, len = nrow(settlement)), .before = 1)
 
 ## Writing the files, we are done!
 
-write.csv(settlement, AGGREGATED_DATASET, na = "NA", row.names = FALSE)
+write.csv(settlement, aggregated_file_name, na = "NA", row.names = FALSE)
 
 
 
