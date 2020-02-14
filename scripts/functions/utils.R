@@ -9,7 +9,7 @@ read_all_csvs<- function(input_csv_folder){
     file_of_interest_short_name<- filenames_short[i]
     data<- read.csv(file_of_interest,
                     stringsAsFactors = FALSE,
-                    row.names = NULL, na.strings = c(""," ",NA, "NA"))
+                    row.names = NULL, na.strings = c(""," ",NA, "NA","<NA>"))
     all_csvs[[file_of_interest_short_name]]<-data
   }
   return(all_csvs)

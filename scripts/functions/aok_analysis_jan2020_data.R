@@ -27,8 +27,9 @@ df<-data.table::rbindlist(csv_list, fill=TRUE) %>% data.frame()
 df2<-df %>% select_if(~!all(is.na(.)))
 
 df3<-df2 %>% filter(!is.na(A.base))
-write.csv(df3, "inputs/2020_01/checking_if_AO_messed_up_cols.csv")
 
+write.csv(df3, "inputs/2020_01/checking_if_AO_messed_up_cols.csv")
+df3<-df3 %>% select(A.base:X_index)
 
 
 
@@ -67,17 +68,25 @@ colnames(df5)<-colname_table$with_group
 # read in previous round and see whats been added to new tool ------------
 
 #ONCE THE COMPILED DATA SET AOK SETTLEMENTS HAVE BEEN FIXED - READ IT IN
-df_settlements_fixed<-read.csv("inputs/2020_01/REACH_SSD_AoK_January2020_duku.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
+df_settlements_fixed<-read.csv("inputs/2020_01/2020_02_13_reach_ssd_aok_clean_data_compiled.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
 
-#akobo were not included initiaal aggregation
+df_settlements_fixed %>% filter(D.info_settlement_final=="Pool-Arop")
+
+
 
 df_akobo_renk<- df5 %>% filter(A.base%in% c("akobo", "renk"))
+
+df_akobo_renk<-df_akobo_renk  %>%
+  filter(is.na(D.info_settlement_other))
 
 d.f<-bind_rows(list(df_settlements_fixed,df_akobo_renk))
 
 
-d.f$D.info_county <-df$D.info_county %>% trimws()
+
+d.f$D.info_county <-d.f$D.info_county %>% trimws()
 d.f$D.info_settlement_final<-d.f$D.info_settlement_final %>% trimws()
+d.f$D.info_settlement<-d.f$D.info_settlement_final %>% trimws()
+d.f%>% filter(D.info_settlement=="Ditoma 1")
 
 #ALL NA'S should be fixed - Renk forgot to map Moldooch so we will cut it
 d.f<-d.f %>% filter(is.na(D.info_settlement_other))
@@ -616,7 +625,13 @@ settlement <- tibble::add_column(as.data.frame(settlement), month = rep(current_
 write.csv(settlement, aggregated_file_name, na = "NA", row.names = FALSE)
 
 
+# master_new_settlement<-read.csv("inputs/new_settlements/SSD_Settlements_V38_made_from_jan2020_data.csv")
+settlement %>% filter(D.info_settlement=="kuerlida") %>% select(D.info_county)
+settlement$D.info_settlement [settlement$D.info_settlement  %in% master_new_settlement$NAMEJOIN ==FALSE]
+settlement$D.info_settlement [settlement$D.info_settlement  %in% master_new_settlement$NAME ==FALSE]
 
+settlement %>% filter(D.info_settlement=="Wun-Akoc")
+(settlement$D.info_settlement %>% tolower())[(settlement$D.info_settlement %>% tolower()) %in% (master_new_settlement$NAME %>% tolower())==FALSE]
 
 
 # update settlements ------------------------------------------------------

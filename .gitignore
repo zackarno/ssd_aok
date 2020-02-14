@@ -44,5 +44,5 @@ vignettes/*.pdf
 !/outputs/.gitkeep
 /product_related/*
 /cleaning_log/*
-
+/scripts/functions/keys.R
 .Rproj.user

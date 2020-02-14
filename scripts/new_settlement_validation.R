@@ -11,7 +11,8 @@ master_settlement_sf<- st_as_sf(master_settlement,coords=c("mast.X","mast.Y"), c
 
 new_sett<-read.csv("inputs/new_settlements/20200207_New_settlement_Jan2020_ZA.csv", stringsAsFactors = FALSE)
 
-
+master_settlement %>% filter(str_detect(mast.NAMECOUNTY, "Kud$"))
+df_settlements_fixed %>% filter( str_detect(D.info_settlement_final, "Odemo$")) %>% select(D.info_settlement_final)
 new_sett %>% filter(is.na(X)|is.na(Y))
 adm2<- st_read(admin_gdb,"ssd_admbnda_adm2_imwg_nbs_20180817" )
 new_sett_sf<-st_as_sf(new_sett,coords=c("X","Y"), crs=4326)
@@ -29,7 +30,7 @@ new_sett_county_join<- new_sett_county_join %>%
       gsub("[[:punct:]]","",.) %>%
       gsub(" ","",.) %>%
       tolower())
-
+new_sett_county_join %>% filter(str_detect(new.settlement_county_sanitized, "kudli$"))
 
 master_settlement_sf<-master_settlement_sf %>%
   mutate(
@@ -39,7 +40,7 @@ master_settlement_sf<-master_settlement_sf %>%
       gsub(" ","",.) %>%
       tolower())
 
-
+master_settlement_sf %>% filter(str_detect(mast.settlement_county_sanitized, "kudli$"))
 
 new_settlements_not_matched<-new_sett_county_join %>%
   butteR::st_drop_geometry_keep_coords() %>%
