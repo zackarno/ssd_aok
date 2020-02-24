@@ -22,8 +22,9 @@ output_file_full_path<-paste0(dqm_folder_path,assessment_year_month,"/",output_f
 filename_short<-paste0(assessment_year_month,"_New_Settlements_in_Kobo_Data.csv")
 # KOBO_datasets <- kobo_datasets(user = c(keys[1],keys[2]), api="kobohr")
 aok_data<-kobo_data_downloader(formid = 489385,user =  c(keys[1],keys[2]), api="kobohr", check = FALSE)
-aok_data$`_uuid`
+
 colnames(aok_data)<-gsub("\\/", ".", colnames(aok_data))
+
 aok_other_settlement<- aok_data %>%
   filter(!is.na(D.info_settlement_other)) %>%
   filter(D.info_settlement_other!= "n/a") %>%

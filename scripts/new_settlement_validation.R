@@ -30,7 +30,7 @@ new_sett_county_join<- new_sett_county_join %>%
       gsub("[[:punct:]]","",.) %>%
       gsub(" ","",.) %>%
       tolower())
-new_sett_county_join %>% filter(str_detect(new.settlement_county_sanitized, "kudli$"))
+
 
 master_settlement_sf<-master_settlement_sf %>%
   mutate(
@@ -40,7 +40,7 @@ master_settlement_sf<-master_settlement_sf %>%
       gsub(" ","",.) %>%
       tolower())
 
-master_settlement_sf %>% filter(str_detect(mast.settlement_county_sanitized, "kudli$"))
+
 
 new_settlements_not_matched<-new_sett_county_join %>%
   butteR::st_drop_geometry_keep_coords() %>%
@@ -54,27 +54,30 @@ new_sett_county_join %>% nrow()
 new_settlements_not_matched %>% nrow()
 
 
-
-buffered_new_settlements_not_matched<-new_settlements_not_matched %>%
-  st_as_sf(coords=c("X","Y"), crs=4326) %>%
-  st_transform(crs=32636) %>%
-  st_buffer(dist = 500)
-
 master_settlement_sf_not_matched<-master_settlement_sf %>%
   filter(mast.settlement_county_sanitized %in% new_sett_county_join$new.settlement_county_sanitized==FALSE)
 
-nrow(master_settlement_sf_not_matched)
-nrow(master_settlement_sf)
+
+
 
 
 
 
 ########################################################################################
 new_with_closest_old<-butteR::closest_distance_rtree(new_settlements_not_matched %>%
-                                                       st_as_sf(coords=c("X","Y"), crs=4326) ,master_settlement_sf_not_matched)
+                                                       st_as_sf(coords=c("X","Y"), crs=4326),
+                                                     master_settlement_sf_not_matched)
 
 new_with_closest_old_vars<-new_with_closest_old %>%
-  select(new.Base, new.Name,new.settlement_county_sanitized, county_input_enum=new.County,county_from_shp= new.ADM2_EN, mast.settlement_county_sanitized, dist_m)
+  select(#X_uuid,
+         new.Base,
+         new.Name,
+         new.settlement_county_sanitized,
+         county_input_enum=new.County,
+         county_from_shp= new.ADM2_EN,
+         mast.settlement=mast.NAMEJOIN,
+         mast.settlement_county_sanitized,
+         dist_m)
 
 new_with_closest_old_vars %>% filter(dist_m<500) %>% View()
 
@@ -86,6 +89,75 @@ check_these<-new_with_closest_old_vars %>%
                                           method= "dl", useBytes = TRUE)
          ) %>%
   arrange(dist_m,desc(string_proxy))
+
+
+new_settlement_table<-check_these
+print(new_settlement_table[1,])
+check_these$uuid<-rnorm(1,100)
+debugonce()
+asdf<-evaluate_unmatched_settlements(user= "zack",new_settlement_table = check_these)
+
+asdf$cleaning_log
+evaluate_unmatched_settlements<-function(user,new_settlement_table){
+  output<-list()
+  new_settlement_table$action<-NA
+
+  for ( i in 1: nrow(new_settlement_table)){
+    print(new_settlement_table[i,])
+    choice <- menu(c("fix with master", "master is not correct"))
+    new_settlement_table[i,][["action"]]<- choice
+      # do other things
+
+  }
+  cleaning_log1<-new_settlement_table %>%
+    filter(action==1) %>%mutate(#uuid= X_uuid,
+      spotted=user,
+      change_type="change_response",
+      Sectors="Area_of_Knowledge",
+      indicator="",
+      current_value= "",
+      new_value="",
+      issue="",
+      suggested_indicator= "D.info_settlement",
+      suggested_issue="User chose other when name correct name was available",
+      suggested_new_value=mast.settlement) %>%
+    select(spotted:suggested_new_value) #need to add uuid into selection on real data
+  cleaning_log2<-new_settlement_table %>%
+    filter(action==1) %>%mutate(#uuid= X_uuid,
+                                    spotted=user,
+                                    change_type="change_response",
+                                    Sectors="Area_of_Knowledge",
+                                    indicator="",
+                                    current_value= "",
+                                    new_value="",
+                                    issue="",
+                                    suggested_indicator= "D.info_settlement_other",
+                                    suggested_issue="User chose other when name correct name was available",
+                                    suggested_new_value=NA) %>%
+    select(spotted:suggested_new_value) #need to add uuid into selection on real data
+
+
+  cleaning_log_combined<-bind_rows(list(get0("cleaning_log1"), get0("cleaning_log2")))
+  output$checked_setlements<-new_settlement_table
+  output$cleaning_log<-cleaning_log_combined
+
+  return(output)
+  }
+
+
+cleaning_log<- name_in_kobo_not_in_new_settlements %>% mutate(uuid= X_uuid,
+                                                              spotted=user,
+                                                              change_type="change_response",
+                                                              Sectors="Area_of_Knowledge",
+                                                              indicator="",
+                                                              current_value= "",
+                                                              new_value="",
+                                                              issue="",
+                                                              suggested_indicator= "D.info_settlement_other",
+                                                              suggested_issue="Name spelled incorrectly in Kobo Form",
+                                                              suggested_current_value=master_col) %>%
+  select(uuid:suggested_current_value)
+
 
 write.csv(check_these,"outputs/20200207_new_settlements_no_exact_match_to_check.csv")
 
@@ -109,3 +181,11 @@ master_settlements_within_500m<-master_settlement_sf_not_matched %>%
   select(new.settlement_county_sanitized, new.Base, new.Name , mast.settlement_county_sanitized)
 
 master_settlements_within_500m %>% View()
+
+
+
+
+buffered_new_settlements_not_matched<-new_settlements_not_matched %>%
+  st_as_sf(coords=c("X","Y"), crs=4326) %>%
+  st_transform(crs=32636) %>%
+  st_buffer(dist = 500)

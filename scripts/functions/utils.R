@@ -15,6 +15,13 @@ read_all_csvs<- function(input_csv_folder){
   return(all_csvs)
 }
 
+download_aok_data<- function(keys_file){
+  source(keys_file)
+  aok_data<-kobo_data_downloader(formid = 489385,user =  c(keys[1],keys[2]), api="kobohr", check = FALSE)
+  colnames(aok_data)<-gsub("\\/", ".", colnames(aok_data))
+  return(aok_data)
+
+}
 
 
 
