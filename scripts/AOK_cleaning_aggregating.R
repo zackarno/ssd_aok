@@ -1,38 +1,8 @@
-AOK Cleaning Aggregating
-================
-
-# South Sudan AOK Data Processing Tutorial
-
-This project was developed in January 2020 to automate South Sudan AOK
-data collation and analysis. This document serves as a tutorial for the
-the next Analyst. As this Github will no longer be maintaine after March
-6 2020 it is recommended that this github be forked by the responsible
-GIS/Data Unit Manager and the fork be maintained and updated.
-
-## Load packages
-
-You will need the packages below. This analysis is dependent on the
-butteR package which can be downloaded from github (link below).
-
-``` r
-# install.packages("devtools")
-devtools::install_github("zackarno/butteR")
-```
-
-``` r
 library(tidyverse)
 library(butteR)
 library(koboloadeR)
-library(lubridate)
-library(sf)
 source("scripts/functions/aok_aggregation_functions.R")
-source("scripts/functions/aok_cleaning_functions.R")
-```
 
-## Inputs
-
-``` r
-month_of_assessment<-"2020-02-01"
 
 admin_gdb<- "../../gis_data/gis_base/boundaries/county_shapefile"
 master_settlement<-read.csv("inputs/48_December_2019/SSD_Settlements_V37.csv", stringsAsFactors = FALSE)
@@ -40,38 +10,12 @@ colnames(master_settlement)<-paste0("mast.",colnames(master_settlement))
 master_settlement_sf<- st_as_sf(master_settlement,coords=c("mast.X","mast.Y"), crs=4326)
 
 
-new_settlements<-butteR::read_all_csvs_in_folder(input_csv_folder = "inputs/2020_02/new_settlements")
-new_sett<-bind_rows(new_settlements)
-new_sett<-new_sett %>% filter(action=="Map")
-
-adm2<- st_read(admin_gdb,"ssd_admbnda_adm2_imwg_nbs_20180401" )
-```
-
-    ## Reading layer `ssd_admbnda_adm2_imwg_nbs_20180401' from data source `C:\02_REACH_SSD\gis_data\gis_base\boundaries\county_shapefile' using driver `ESRI Shapefile'
-    ## Simple feature collection with 78 features and 17 fields
-    ## geometry type:  POLYGON
-    ## dimension:      XY
-    ## bbox:           xmin: -477970.6 ymin: 385787.9 xmax: 827553.4 ymax: 1352704
-    ## epsg (SRID):    32636
-    ## proj4string:    +proj=utm +zone=36 +datum=WGS84 +units=m +no_defs
-
-``` r
-adm2<-st_transform(adm2,crs=4326)
-new_sett_sf<-st_as_sf(new_sett,coords=c("long","lat"), crs=4326)
-
 # LOAD RAW DATA -----------------------------------------------------------
 # aok_raw<-download_aok_data(keys_file = "scripts/functions/keys.R")
 # write.csv(aok_raw,"inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv")
 aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
-```
 
-## COMPILE AND IMPLEMENT CLEANING LOGS
 
-Once cleaning logs are revieved this chunk can be filled. First step is
-to compile all of the logs into one. Next we can check and implement
-them using the two butteR tools commented out below.
-
-``` r
 # STEP 1 COMPILE CLEANING LOGS --------------------------------------------
 
 # cleaning_logs<-butteR::read_all_csvs_in_folder(input_csv_folder = "inputs/2020_02/cleaning_logs")
@@ -84,11 +28,25 @@ them using the two butteR tools commented out below.
 # OUTPUT ISSUES TO AOS
 
 # IMPLEMENT CLEANING LOG
-```
 
-## SPATIAL JOINS AND REARRANGE DATA
+# CREATE AOK_CLEAN
+# STEP 2 NEW SETTLEMENTS --------------------------------------------------
+# PERHAPS THE MOST DIFFICULT STEP
+# OUTPUTS: NEW ITEMSET, NEW MASTER SETTLEMENT FILE, CLEANING LOG
 
-``` r
+new_settlements<-butteR::read_all_csvs_in_folder(input_csv_folder = "inputs/2020_02/new_settlements")
+new_sett<-bind_rows(new_settlements)
+new_sett<-new_sett %>% filter(action=="Map")
+
+adm2<- st_read(admin_gdb,"ssd_admbnda_adm2_imwg_nbs_20180401" )
+adm2<-st_transform(adm2,crs=4326)
+new_sett_sf<-st_as_sf(new_sett,coords=c("long","lat"), crs=4326)
+
+
+ggplot()+geom_sf(data=adm2)+
+  geom_sf_label(data= new_sett_sf,aes(label =D.info_settlement_other))+
+  geom_sf(data=new_sett_sf)
+
 # SPATIAL JOIN
 new_sett_sf<-new_sett_sf %>% st_join( adm2 %>% dplyr::select(adm2=admin2RefN))
 
@@ -102,20 +60,8 @@ master_settlement_sf<-master_settlement_sf %>%
   mutate(
     mast.settlement_county_sanitized= mast.NAMECOUNTY %>% tolower_rm_special()
   )
-```
 
-## checks
 
-Compare new settlements to data after initial round of data cleaning
-implementation too make sure that AO has not already dealt wih the
-settlement in the cleaning log. Technically, if the settlement is
-addressed in the cleaning log they should have put “cleaning\_log” under
-the action column in the new settlement data set.
-
-If the settlement in the new settlement sheet has been addressed in the
-cleaning log, remove it from the new settlement sheet.
-
-``` r
 # CHECK IF NEW SETTLEMENTS HAVE BEEN FIXED IN CL --------------------------
 
 aok_clean1<-aok_raw
@@ -129,19 +75,8 @@ remove_from_new_sett<-aok_clean1 %>%
   select(X_uuid,D.info_settlement) %>% pull(X_uuid)
 
 new_sett_sf<- new_sett_sf %>% filter(!uuid %in% remove_from_new_sett)
-```
 
-## EXACT MATCHES
 
-It is possible that the enumerator entered “other” for D.new\_settlement
-and then wrote a settlement that already existed. These cases are easy
-to find. If this situation occurs, it is an error during data
-collection/cleaning and should therefore be addressed in a cleaning log
-for documentation purposes. The extract\_matches\_to\_cl to transform
-this information into a cleaning log, which can then be implemented with
-the butteR::implement\_cleaning\_log function.
-
-``` r
 # NEW SETTLEMENT DATA WHICH MATCHES MASTER SETTLEMENTS EXACTLY ------------
 
 exact_matches1<-new_sett_sf %>%
@@ -160,22 +95,7 @@ aok_clean2<-butteR::implement_cleaning_log(df = aok_clean1,df_uuid = "X_uuid",
                                            cl_change_col = "indicator",
                                            cl_uuid = "uuid",
                                            cl_new_val = "new_value")
-```
 
-    ## character(0)
-    ## [1] "NOT IN DATASET"
-    ## [1] "no change_response in log"
-    ## [1] "no surveys to remove in log"
-
-## FIND CLOSEST POINT
-
-We will next use the butteR::closest\_distance\_rtree tool to find the
-closest point in the master settlement list to each of the remaining new
-settlements. The following code just runs this tool, cleans up the
-output and also performs fuzzy string distance measurement which may be
-helpful.
-
-``` r
 #EXTRACT NEW SETTLEMENTS WHICH DO NO MATCH
 new_sett_sf_unmatched<- new_sett_sf %>% filter(!uuid %in% exact_matches1$uuid)
 
@@ -211,38 +131,8 @@ settlements_best_guess<-new_with_closest_old_vars %>%
                                              method= "dl", useBytes = TRUE)
   ) %>%
   arrange(dist_m,desc(string_proxy))
-```
 
-## EVALUATING THE CLOSEST POINT
 
-The object, “settlements\_best\_guess,” is the best output to review and
-determine if the found closest settlement in the master list should take
-the place of the new settlement or not. The user has two options:
-
-1.  The less preferred option: can write this output to a csv and
-    manually assess the the table. Add a column called “action”. If the
-    the master settlement should replace the “new settlement” put 1,
-    otherwise 2. This file will then need to be read back into the
-    script. Additionally, cleaning log entries will need to be added for
-    any record in which a 1 was perscribed to action.
-
-2.  The preferred option: The code below can be used to interactively
-    assess the matched settlements in the R environment. When running
-    the code in an R script a menu will prompt you through the
-    interaction. Each line in the settlements\_best\_guess will be
-    printed with the prompt: “1. fix with master, or 2. master is not
-    correct.” The user must press 1 or two based on there understanding
-    of the names and distances provided.
-
-After cycling through each record, the resulting object is a list of two
-data frames. The first data frame is the same list used as the input
-with the additional column “action” where action=1 means fix dataset
-with new settlement and 2 means this is a new settlement. The second
-data frame is the auto-generated cleaning log for all records where the
-user decided to fix the settlement with a settlement from the master
-list.
-
-``` r
 # HOWEVER, TO KEEP EVERYTHING IN THE R ENVIRONMENT- HERE IS AN INTERACTIVE FUNCTION TO MODIFY THE SETTLEMENT BEST GUESS DF IN PLACE
 # OUTUT WILL BE A CLEANING LOG (IF THERE ARE CHANGES TO BE MADE)
 new_settlement_evaluation<-evaluate_unmatched_settlements(user= "zack",new_settlement_table = settlements_best_guess)
@@ -251,25 +141,8 @@ new_settlement_evaluation$checked_setlements
 new_settlement_evaluation$cleaning_log
 
 # butteR::implement_cleaning_log()
-```
 
-## CREATING A NEW ITEMSET FOR NEXT ROUND
-
-Interactive functions cannot be used in a knitted document. Therefore,
-to fully understand this functionality the user will have to use this
-code in the R-Script.
-
-For the sake of showing how to produce the new itemset for the odk tool
-and producing the new master settlement list I will create the action
-column in R and name it appropriately
-
-``` r
-#this would normally be unnecessary as the objects would be created from the interactive function
-#############################################################################
-new_settlement_evaluation<-list()
-new_settlement_evaluation$checked_setlements<-settlements_best_guess
-new_settlement_evaluation$checked_setlements$action<-c(1,1,2,2,2)
-#############################################################################
+# ADD NEW SETTLEMENTS TO NEW ITEMSET  -------------------------------------
 
 #put into itemset format
 new_sets_to_add_itemset<-new_settlement_evaluation$checked_setlements %>%
@@ -288,18 +161,20 @@ itemset_other<- itemset %>% filter(name=="other")
 
 itemset_binded<-bind_rows(list(new_sets_to_add_itemset,itemset_not_other)) %>% arrange(admin_2)
 itemset_full_binded<- bind_rows(list(itemset_binded,itemset_other))
-```
 
-## GENERATE NEW MASTER SETTLEMENT LIST
+#write to csv for next aok round
 
-Only settlements determined to be actually new settlements should be
-added to the master settlement list. The following code reads the master
-settlement in again and adds all of the checked new settlements that are
-determined to be new.
 
-``` r
-# NEXT WE ADD THE NEW SETTLEMENTS TO THE MASTER LIST
+# NEXT WE ADD THE NEW SETTLEMENTS TO THE SHAPEFILE ------------------------
+library(lubridate)
+month_of_assessment<-"2020-02-01"
+
+
+# add to master file ------------------------------------------------------
+# new_sett<-read.csv("inputs/new_settlements/20200207_New_settlement_Jan2020_ZA.csv", stringsAsFactors = FALSE)
+# new_sett %>% head()
 master_settlement<-read.csv("inputs/48_December_2019/SSD_Settlements_V37.csv", stringsAsFactors = FALSE)
+# master_settlement$DATA_SOURC
 
 new_setts_add_to_master<-new_settlement_evaluation$checked_setlements %>%
   filter(action==2) %>%
@@ -312,10 +187,57 @@ new_setts_add_to_master<-new_settlement_evaluation$checked_setlements %>%
     DATA_SOURC="AOK",
     IMG_VERIFD= 0
   ) %>% #get coordinates from field data back in
-  left_join(new_sett_sf %>%
-              st_drop_geometry_keep_coords(), by="uuid") %>%
+  left_join(new_sett_county_join %>%
+              st_drop_geometry_keep_coords()) %>%
   filter(!is.na(X)) %>%
   select(NAME,NAMEJOIN,NAMECOUNTY,COUNTYJOIN,DATE,DATA_SOURC,IMG_VERIFD,X,Y)
 
 master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(DATE=dmy(DATE))))
-```
+
+#write to csv v 39
+
+# THERE ARE CASES WHERE AO CATCHES ERROR IN NEW SETTLEMENT TAB AND THEY HAVE BEEN INSTRUCTED TO MAKE THE CHANGES IN THE CLEANING LOG. THEREFORE, WE SHOULD CHECK THIS. CAN DO THIS BY LOOKING AT THE "CLEANED DATA"
+
+# FIRST WE NEED TO COMPILE ALL OF THE NEW SETTLEMENT DATA
+
+
+#will use these...........
+########################################
+
+# butteR::read_all_csvs_in_folder()
+# bind_rows
+
+#for now we can just use these.
+new_sett<-read.csv("cleaning_log/Juba_New_Settlements_Mapping_Feb_2020.csv", stringsAsFactors = FALSE)
+new_sett<-new_sett %>% filter(!is.na(Long))
+
+
+new_settlements_to_check<-new_settlement %>%
+  left_join(aok_data %>%
+              select(X_uuid,D.info_settlement),
+            by="uuid") %>%
+  filter(is.na(D.info_settlement))
+
+
+
+
+
+
+
+
+
+
+
+
+#NOW FOLLOW THE REST OF THE PROCESS.
+
+#IMPLEMENT GENERATED CLEANING LOG - OUTPUT NEW DATA SET.
+
+
+# STEP 3 AGGREGATION ------------------------------------------------------
+
+#aggregation functions are sourced
+# nee to copy code from aok_aggregation jan 2020
+
+
+

@@ -47,6 +47,6 @@ vignettes/*.pdf
 /cleaning_log/*
 /scripts/functions/keys.R
 /scripts/archived/*
-/scripts/experimenta/*
+/scripts/experimental/*
 /scrap/*
 .Rproj.user
