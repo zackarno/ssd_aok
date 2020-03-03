@@ -1,15 +1,24 @@
--   [SOUTH SUDAN AOK DATA PROCESSING
-    TUTORIAL](#south-sudan-aok-data-processing-tutorial)
-    -   [SETUP](#setup)
-    -   [Inputs](#inputs)
-    -   [DEALING WITH NEW SETTLEMENT
-        DATA](#dealing-with-new-settlement-data)
+-   [SETUP](#setup)
+    -   [packages](#packages)
+-   [INPUTS](#inputs)
+    -   [New Settlement Data](#new-settlement-data)
+    -   [Cleaning Logs](#cleaning-logs)
+-   [DEALING WITH NEW SETTLEMENT
+    DATA](#dealing-with-new-settlement-data)
+    -   [Reformatting Data/ Minor
+        Manipulations](#reformatting-data-minor-manipulations)
+    -   [Checking/Cross Referencing Settlement Data, Cleaning Logs and
+        Assessment
+        Data](#checkingcross-referencing-settlement-data-cleaning-logs-and-assessment-data)
     -   [Exact Matches](#exact-matches)
+    -   [Finding The Closest Point](#finding-the-closest-point)
+    -   [Evaluating the closest point](#evaluating-the-closest-point)
     -   [NEW SETTLEMENT OUTPUTS](#new-settlement-outputs)
-    -   [AGGREATION/ANALYSIS](#aggreationanalysis)
+-   [AGGREATION/ANALYSIS](#aggreationanalysis)
+    -   [County Level Aggregation](#county-level-aggregation)
+    -   [Hexagonal Aggregation](#hexagonal-aggregation)
 
-SOUTH SUDAN AOK DATA PROCESSING TUTORIAL
-========================================
+<!-- # SOUTH SUDAN AOK DATA PROCESSING TUTORIAL -->
 
 This project was developed in January 2020 to automate South Sudan AOK
 data collation and analysis. This document serves as a tutorial for the
@@ -18,9 +27,10 @@ the next Analyst. As this Github will no longer be maintaine after March
 GIS/Data Unit Manager and the fork be maintained and updated.
 
 SETUP
------
+=====
 
-### packages
+packages
+--------
 
 You will need the packages below. This analysis is dependent on the
 butteR package which can be downloaded from github (link below).
@@ -40,10 +50,11 @@ source("scripts/functions/aok_aggregation_functions.R")
 source("scripts/functions/aok_cleaning_functions.R")
 ```
 
-Inputs
-------
+INPUTS
+======
 
-### New Settlement Data
+New Settlement Data
+-------------------
 
 ``` r
 month_of_assessment<-"2020-02-01"
@@ -79,7 +90,8 @@ new_sett_sf<-st_as_sf(new_sett,coords=c("long","lat"), crs=4326)
 aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
 ```
 
-### cleaning logs
+Cleaning Logs
+-------------
 
 Once cleaning logs are revieved this chunk can be filled. First step is
 to compile all of the logs into one. Next we can check and implement
@@ -101,9 +113,10 @@ them using the two butteR tools commented out below.
 ```
 
 DEALING WITH NEW SETTLEMENT DATA
---------------------------------
+================================
 
-### Reformatting Data/ Minor Manipulations
+Reformatting Data/ Minor Manipulations
+--------------------------------------
 
 ``` r
 # SPATIAL JOIN
@@ -121,7 +134,8 @@ master_settlement_sf<-master_settlement_sf %>%
   )
 ```
 
-### Checking/Cross Referencing Settlement Data, Cleaning Logs and Assessment Data
+Checking/Cross Referencing Settlement Data, Cleaning Logs and Assessment Data
+-----------------------------------------------------------------------------
 
 Compare new settlements to data after initial round of data cleaning
 implementation too make sure that AO has not already dealt wih the
@@ -185,7 +199,8 @@ aok_clean2<-butteR::implement_cleaning_log(df = aok_clean1,df_uuid = "X_uuid",
     ## [1] "no change_response in log"
     ## [1] "no surveys to remove in log"
 
-### Finding The Closest Point
+Finding The Closest Point
+-------------------------
 
 We will next use the butteR::closest\_distance\_rtree tool to find the
 closest point in the master settlement list to each of the remaining new
@@ -231,7 +246,8 @@ settlements_best_guess<-new_with_closest_old_vars %>%
   arrange(dist_m,desc(string_proxy))
 ```
 
-### Evaluating the closest point
+Evaluating the closest point
+----------------------------
 
 The object, “settlements\_best\_guess,” is the best output to review and
 determine if the found closest settlement in the master list should take
@@ -342,9 +358,10 @@ master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(
 ```
 
 AGGREATION/ANALYSIS
--------------------
+===================
 
-### County Level Aggregation
+County Level Aggregation
+------------------------
 
 Once the cleaning log(s) have been implemented and the new settlements
 dealt with it is time to aggregate/analyze the data. It is important to
@@ -369,7 +386,8 @@ script. The long term data is the input for the Tableau workbook.
 # insert code here
 ```
 
-### Hexagonal Aggregation
+Hexagonal Aggregation
+---------------------
 
 The monthly data should then be aggregated to the hexagonal grid for
 Factsheet maps. The grid has already been created and can simply be

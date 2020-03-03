@@ -14,12 +14,12 @@ knitr::opts_chunk$set(echo = TRUE,warning=F,message=F)
 ```
 
 
-# SOUTH SUDAN AOK DATA PROCESSING TUTORIAL
+<!-- # SOUTH SUDAN AOK DATA PROCESSING TUTORIAL -->
 
 This project was developed in January 2020 to automate South Sudan AOK data collation and analysis. This document serves as a tutorial for the the next Analyst. As this Github will no longer be maintaine after March 6 2020 it is recommended that this github be forked by the responsible GIS/Data Unit Manager and the fork be maintained and updated.
 
-## SETUP
-### packages
+# SETUP
+## packages
 
 You will need the packages below. This analysis is dependent on the butteR package which can be downloaded from github (link below).
 
@@ -42,8 +42,8 @@ source("scripts/functions/aok_cleaning_functions.R")
 ```
 
 
-## Inputs
-### New Settlement Data
+# INPUTS
+## New Settlement Data
 
 ```{r inputs}
 
@@ -70,7 +70,7 @@ aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFa
 ```
 
 
-### cleaning logs
+## Cleaning Logs
  
 Once cleaning logs are revieved this chunk can be filled. First step is to compile all of the logs into one. Next we can check and implement them using the two butteR tools commented out below.
 ```{r}
@@ -89,8 +89,8 @@ Once cleaning logs are revieved this chunk can be filled. First step is to compi
 ```
 
 
-## DEALING WITH NEW SETTLEMENT DATA
-### Reformatting Data/ Minor Manipulations
+# DEALING WITH NEW SETTLEMENT DATA
+## Reformatting Data/ Minor Manipulations
 ```{r}
 # SPATIAL JOIN
 new_sett_sf<-new_sett_sf %>% st_join( adm2 %>% dplyr::select(adm2=admin2RefN))
@@ -108,7 +108,7 @@ master_settlement_sf<-master_settlement_sf %>%
 ```
 
 
-### Checking/Cross Referencing Settlement Data, Cleaning Logs and Assessment Data
+## Checking/Cross Referencing Settlement Data, Cleaning Logs and Assessment Data
 Compare new settlements to data after initial round of data cleaning implementation too make sure that AO has not already dealt wih the settlement in the cleaning log. Technically, if the settlement is addressed in the cleaning log they should have put  "cleaning_log" under the action column in the new settlement data set.
 
 If the settlement in the new settlement sheet has been addressed in the cleaning log, remove it from the new settlement sheet.
@@ -154,7 +154,7 @@ aok_clean2<-butteR::implement_cleaning_log(df = aok_clean1,df_uuid = "X_uuid",
                                            cl_new_val = "new_value")
 ```
 
-### Finding The Closest Point
+## Finding The Closest Point
 
 We will next use the butteR::closest_distance_rtree tool to find the closest point in the master settlement list to each of the remaining new settlements. The following code just runs this tool, cleans up the output and also performs fuzzy string distance measurement which may be helpful.
 
@@ -197,7 +197,7 @@ settlements_best_guess<-new_with_closest_old_vars %>%
   arrange(dist_m,desc(string_proxy))
 
 ```
-### Evaluating the closest point
+## Evaluating the closest point
 
 The object, "settlements_best_guess,"  is the best output to review and determine if the found closest settlement in the master list should take the place of the new settlement or  not. The user has two options:
 
@@ -286,8 +286,8 @@ master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(
 ````
 
 
-## AGGREATION/ANALYSIS
-### County Level Aggregation
+# AGGREATION/ANALYSIS
+## County Level Aggregation
 Once the cleaning log(s) have been implemented and the new settlements dealt with it is time to aggregate/analyze the data. It is important to note that any cleaning logs generated from the new settlement process must be implemented and binded to the original compiled cleaning log for documentation purposes.
 
 The aggregation relies on functions built many years ago. It is recommended that this process be streamlined in the future with a new script. However, given time constraints we can continue to use the old process since it does work.
@@ -303,7 +303,7 @@ Once aggregation is completed it should be written to csv. This csv can be binde
 # insert code here
 ````
 
-### Hexagonal Aggregation
+## Hexagonal Aggregation
 The monthly data should then be aggregated to the hexagonal grid for Factsheet maps. The grid has already been created and can simply be loaded.
 
 ```{r}
