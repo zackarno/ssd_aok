@@ -14,11 +14,12 @@ knitr::opts_chunk$set(echo = TRUE,warning=F,message=F)
 ```
 
 
-# South Sudan AOK Data Processing Tutorial
+# SOUTH SUDAN AOK DATA PROCESSING TUTORIAL
 
 This project was developed in January 2020 to automate South Sudan AOK data collation and analysis. This document serves as a tutorial for the the next Analyst. As this Github will no longer be maintaine after March 6 2020 it is recommended that this github be forked by the responsible GIS/Data Unit Manager and the fork be maintained and updated.
 
-## Load packages
+## SETUP
+### packages
 
 You will need the packages below. This analysis is dependent on the butteR package which can be downloaded from github (link below).
 
@@ -40,8 +41,9 @@ source("scripts/functions/aok_cleaning_functions.R")
 
 ```
 
-## Inputs
 
+## Inputs
+### New Settlement Data
 
 ```{r inputs}
 
@@ -68,7 +70,7 @@ aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFa
 ```
 
 
-## COMPILE AND IMPLEMENT CLEANING LOGS
+### cleaning logs
  
 Once cleaning logs are revieved this chunk can be filled. First step is to compile all of the logs into one. Next we can check and implement them using the two butteR tools commented out below.
 ```{r}
@@ -87,7 +89,8 @@ Once cleaning logs are revieved this chunk can be filled. First step is to compi
 ```
 
 
-## SPATIAL JOINS AND REARRANGE DATA
+## DEALING WITH NEW SETTLEMENT DATA
+### Reformatting Data/ Minor Manipulations
 ```{r}
 # SPATIAL JOIN
 new_sett_sf<-new_sett_sf %>% st_join( adm2 %>% dplyr::select(adm2=admin2RefN))
@@ -105,7 +108,7 @@ master_settlement_sf<-master_settlement_sf %>%
 ```
 
 
-## checks
+### Checking/Cross Referencing Settlement Data, Cleaning Logs and Assessment Data
 Compare new settlements to data after initial round of data cleaning implementation too make sure that AO has not already dealt wih the settlement in the cleaning log. Technically, if the settlement is addressed in the cleaning log they should have put  "cleaning_log" under the action column in the new settlement data set.
 
 If the settlement in the new settlement sheet has been addressed in the cleaning log, remove it from the new settlement sheet.
@@ -126,7 +129,7 @@ new_sett_sf<- new_sett_sf %>% filter(!uuid %in% remove_from_new_sett)
 
 ```
 
-## EXACT MATCHES
+## Exact Matches
 
 It is possible that the enumerator entered "other" for D.new_settlement and then wrote a settlement that already existed. These cases are easy to find. If this situation occurs, it is an error during data collection/cleaning and should therefore be addressed in a cleaning log for documentation purposes. The extract_matches_to_cl to transform this information into a cleaning log, which can then be implemented with the butteR::implement_cleaning_log function.
 
@@ -151,7 +154,7 @@ aok_clean2<-butteR::implement_cleaning_log(df = aok_clean1,df_uuid = "X_uuid",
                                            cl_new_val = "new_value")
 ```
 
-## FIND CLOSEST POINT
+### Finding The Closest Point
 
 We will next use the butteR::closest_distance_rtree tool to find the closest point in the master settlement list to each of the remaining new settlements. The following code just runs this tool, cleans up the output and also performs fuzzy string distance measurement which may be helpful.
 
@@ -194,7 +197,7 @@ settlements_best_guess<-new_with_closest_old_vars %>%
   arrange(dist_m,desc(string_proxy))
 
 ```
-## EVALUATING THE CLOSEST POINT
+### Evaluating the closest point
 
 The object, "settlements_best_guess,"  is the best output to review and determine if the found closest settlement in the master list should take the place of the new settlement or  not. The user has two options:
 
@@ -216,7 +219,8 @@ new_settlement_evaluation$cleaning_log
 # butteR::implement_cleaning_log()
 ```
 
-## CREATING A NEW ITEMSET FOR NEXT ROUND
+## NEW SETTLEMENT OUTPUTS
+### Generate New Itemset
 
 Interactive functions cannot be used in a knitted document. Therefore, to fully understand this functionality the user will have to use this code in the R-Script.
 
@@ -252,7 +256,7 @@ itemset_full_binded<- bind_rows(list(itemset_binded,itemset_other))
 ````
 
 
-## GENERATE NEW MASTER SETTLEMENT LIST 
+### Generate New Master Settlement List
 
 Only settlements determined to be actually new settlements should be added to the master settlement list.
 The following code reads the master settlement in again and adds all of the checked new settlements that are determined to be new.
@@ -282,7 +286,8 @@ master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(
 ````
 
 
-## County Level Aggregation/Analysis
+## AGGREATION/ANALYSIS
+### County Level Aggregation
 Once the cleaning log(s) have been implemented and the new settlements dealt with it is time to aggregate/analyze the data. It is important to note that any cleaning logs generated from the new settlement process must be implemented and binded to the original compiled cleaning log for documentation purposes.
 
 The aggregation relies on functions built many years ago. It is recommended that this process be streamlined in the future with a new script. However, given time constraints we can continue to use the old process since it does work.
@@ -291,7 +296,6 @@ The aggregation relies on functions built many years ago. It is recommended that
 # insert aggregation script here or source it
 ````
 
-## OUTPUT County Level Aggregation/Analysis
 
 Once aggregation is completed it should be written to csv. This csv can be binded to the long term data using the long term data aggreation script. The long term data is the input for the Tableau workbook.
 
@@ -299,7 +303,7 @@ Once aggregation is completed it should be written to csv. This csv can be binde
 # insert code here
 ````
 
-## Hexagonal Aggregation
+### Hexagonal Aggregation
 The monthly data should then be aggregated to the hexagonal grid for Factsheet maps. The grid has already been created and can simply be loaded.
 
 ```{r}
