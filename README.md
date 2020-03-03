@@ -1,3 +1,5 @@
+-   [SOUTH SUDAN AOK DATA PROCESSING
+    TUTORIAL](#south-sudan-aok-data-processing-tutorial)
 -   [SETUP](#setup)
     -   [packages](#packages)
 -   [INPUTS](#inputs)
@@ -18,13 +20,15 @@
     -   [County Level Aggregation](#county-level-aggregation)
     -   [Hexagonal Aggregation](#hexagonal-aggregation)
 
-<!-- # SOUTH SUDAN AOK DATA PROCESSING TUTORIAL -->
+SOUTH SUDAN AOK DATA PROCESSING TUTORIAL
+========================================
 
 This project was developed in January 2020 to automate South Sudan AOK
 data collation and analysis. This document serves as a tutorial for the
-the next Analyst. As this Github will no longer be maintaine after March
-6 2020 it is recommended that this github be forked by the responsible
-GIS/Data Unit Manager and the fork be maintained and updated.
+the next Analyst. As this Github will no longer be maintained after
+March 6 2020 it is recommended that this github be forked by the
+responsible GIS/Data Unit Manager and the fork be maintained and
+updated.
 
 SETUP
 =====
