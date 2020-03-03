@@ -1,7 +1,27 @@
-AOK Cleaning Aggregating
-================
+-   [South Sudan AOK Data Processing
+    Tutorial](#south-sudan-aok-data-processing-tutorial)
+    -   [Load packages](#load-packages)
+    -   [Inputs](#inputs)
+    -   [COMPILE AND IMPLEMENT CLEANING
+        LOGS](#compile-and-implement-cleaning-logs)
+    -   [SPATIAL JOINS AND REARRANGE
+        DATA](#spatial-joins-and-rearrange-data)
+    -   [checks](#checks)
+    -   [EXACT MATCHES](#exact-matches)
+    -   [FIND CLOSEST POINT](#find-closest-point)
+    -   [EVALUATING THE CLOSEST POINT](#evaluating-the-closest-point)
+    -   [CREATING A NEW ITEMSET FOR NEXT
+        ROUND](#creating-a-new-itemset-for-next-round)
+    -   [GENERATE NEW MASTER SETTLEMENT
+        LIST](#generate-new-master-settlement-list)
+    -   [County Level
+        Aggregation/Analysis](#county-level-aggregationanalysis)
+    -   [OUTPUT County Level
+        Aggregation/Analysis](#output-county-level-aggregationanalysis)
+    -   [Hexagonal Aggregation](#hexagonal-aggregation)
 
-# South Sudan AOK Data Processing Tutorial
+South Sudan AOK Data Processing Tutorial
+========================================
 
 This project was developed in January 2020 to automate South Sudan AOK
 data collation and analysis. This document serves as a tutorial for the
@@ -9,7 +29,8 @@ the next Analyst. As this Github will no longer be maintaine after March
 6 2020 it is recommended that this github be forked by the responsible
 GIS/Data Unit Manager and the fork be maintained and updated.
 
-## Load packages
+Load packages
+-------------
 
 You will need the packages below. This analysis is dependent on the
 butteR package which can be downloaded from github (link below).
@@ -29,7 +50,8 @@ source("scripts/functions/aok_aggregation_functions.R")
 source("scripts/functions/aok_cleaning_functions.R")
 ```
 
-## Inputs
+Inputs
+------
 
 ``` r
 month_of_assessment<-"2020-02-01"
@@ -65,7 +87,8 @@ new_sett_sf<-st_as_sf(new_sett,coords=c("long","lat"), crs=4326)
 aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
 ```
 
-## COMPILE AND IMPLEMENT CLEANING LOGS
+COMPILE AND IMPLEMENT CLEANING LOGS
+-----------------------------------
 
 Once cleaning logs are revieved this chunk can be filled. First step is
 to compile all of the logs into one. Next we can check and implement
@@ -86,7 +109,8 @@ them using the two butteR tools commented out below.
 # IMPLEMENT CLEANING LOG
 ```
 
-## SPATIAL JOINS AND REARRANGE DATA
+SPATIAL JOINS AND REARRANGE DATA
+--------------------------------
 
 ``` r
 # SPATIAL JOIN
@@ -104,7 +128,8 @@ master_settlement_sf<-master_settlement_sf %>%
   )
 ```
 
-## checks
+checks
+------
 
 Compare new settlements to data after initial round of data cleaning
 implementation too make sure that AO has not already dealt wih the
@@ -131,7 +156,8 @@ remove_from_new_sett<-aok_clean1 %>%
 new_sett_sf<- new_sett_sf %>% filter(!uuid %in% remove_from_new_sett)
 ```
 
-## EXACT MATCHES
+EXACT MATCHES
+-------------
 
 It is possible that the enumerator entered “other” for D.new\_settlement
 and then wrote a settlement that already existed. These cases are easy
@@ -167,7 +193,8 @@ aok_clean2<-butteR::implement_cleaning_log(df = aok_clean1,df_uuid = "X_uuid",
     ## [1] "no change_response in log"
     ## [1] "no surveys to remove in log"
 
-## FIND CLOSEST POINT
+FIND CLOSEST POINT
+------------------
 
 We will next use the butteR::closest\_distance\_rtree tool to find the
 closest point in the master settlement list to each of the remaining new
@@ -213,7 +240,8 @@ settlements_best_guess<-new_with_closest_old_vars %>%
   arrange(dist_m,desc(string_proxy))
 ```
 
-## EVALUATING THE CLOSEST POINT
+EVALUATING THE CLOSEST POINT
+----------------------------
 
 The object, “settlements\_best\_guess,” is the best output to review and
 determine if the found closest settlement in the master list should take
@@ -253,7 +281,8 @@ new_settlement_evaluation$cleaning_log
 # butteR::implement_cleaning_log()
 ```
 
-## CREATING A NEW ITEMSET FOR NEXT ROUND
+CREATING A NEW ITEMSET FOR NEXT ROUND
+-------------------------------------
 
 Interactive functions cannot be used in a knitted document. Therefore,
 to fully understand this functionality the user will have to use this
@@ -290,7 +319,8 @@ itemset_binded<-bind_rows(list(new_sets_to_add_itemset,itemset_not_other)) %>% a
 itemset_full_binded<- bind_rows(list(itemset_binded,itemset_other))
 ```
 
-## GENERATE NEW MASTER SETTLEMENT LIST
+GENERATE NEW MASTER SETTLEMENT LIST
+-----------------------------------
 
 Only settlements determined to be actually new settlements should be
 added to the master settlement list. The following code reads the master
@@ -318,4 +348,44 @@ new_setts_add_to_master<-new_settlement_evaluation$checked_setlements %>%
   select(NAME,NAMEJOIN,NAMECOUNTY,COUNTYJOIN,DATE,DATA_SOURC,IMG_VERIFD,X,Y)
 
 master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(DATE=dmy(DATE))))
+```
+
+County Level Aggregation/Analysis
+---------------------------------
+
+Once the cleaning log(s) have been implemented and the new settlements
+dealt with it is time to aggregate/analyze the data. It is important to
+note that any cleaning logs generated from the new settlement process
+must be implemented and binded to the original compiled cleaning log for
+documentation purposes.
+
+The aggregation relies on functions built many years ago. It is
+recommended that this process be streamlined in the future with a new
+script. However, given time constraints we can continue to use the old
+process since it does work.
+
+``` r
+# insert aggregation script here or source it
+```
+
+OUTPUT County Level Aggregation/Analysis
+----------------------------------------
+
+Once aggregation is completed it should be written to csv. This csv can
+be binded to the long term data using the long term data aggreation
+script. The long term data is the input for the Tableau workbook.
+
+``` r
+# insert code here
+```
+
+Hexagonal Aggregation
+---------------------
+
+The monthly data should then be aggregated to the hexagonal grid for
+Factsheet maps. The grid has already been created and can simply be
+loaded.
+
+``` r
+# insert code here or source script
 ```

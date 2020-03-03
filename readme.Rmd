@@ -1,6 +1,12 @@
 ---
 title: "AOK  Cleaning Aggregating"
-output: github_document
+output: 
+  md_document:
+    variant: markdown_github
+    toc: true
+    toc_depth: 2
+# output: github_document
+  # toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -274,4 +280,30 @@ new_setts_add_to_master<-new_settlement_evaluation$checked_setlements %>%
 master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(DATE=dmy(DATE))))
 
 ````
+
+
+## County Level Aggregation/Analysis
+Once the cleaning log(s) have been implemented and the new settlements dealt with it is time to aggregate/analyze the data. It is important to note that any cleaning logs generated from the new settlement process must be implemented and binded to the original compiled cleaning log for documentation purposes.
+
+The aggregation relies on functions built many years ago. It is recommended that this process be streamlined in the future with a new script. However, given time constraints we can continue to use the old process since it does work.
+
+```{r}
+# insert aggregation script here or source it
+````
+
+## OUTPUT County Level Aggregation/Analysis
+
+Once aggregation is completed it should be written to csv. This csv can be binded to the long term data using the long term data aggreation script. The long term data is the input for the Tableau workbook.
+
+```{r}
+# insert code here
+````
+
+## Hexagonal Aggregation
+The monthly data should then be aggregated to the hexagonal grid for Factsheet maps. The grid has already been created and can simply be loaded.
+
+```{r}
+# insert code here or source script
+
+```
 
