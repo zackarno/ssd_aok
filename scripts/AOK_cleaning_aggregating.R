@@ -3,6 +3,7 @@ library(butteR)
 library(koboloadeR)
 library(lubridate)
 library(sf)
+
 source("scripts/functions/aok_aggregation_functions.R")
 source("scripts/functions/aok_cleaning_functions.R")
 
@@ -16,7 +17,8 @@ master_settlement_sf<- st_as_sf(master_settlement,coords=c("mast.X","mast.Y"), c
 # LOAD RAW DATA -----------------------------------------------------------
 # aok_raw<-download_aok_data(keys_file = "scripts/functions/keys.R")
 # write.csv(aok_raw,"inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv")
-aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
+# aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
+aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200304_from_KOBO.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
 
 
 # STEP 1 COMPILE CLEANING LOGS --------------------------------------------
@@ -186,7 +188,7 @@ month_of_assessment<-"2020-02-01"
 # new_sett %>% head()
 master_settlement<-read.csv("inputs/48_December_2019/SSD_Settlements_V37.csv", stringsAsFactors = FALSE)
 # master_settlement$DATA_SOURC
-
+new_sett_sf
 new_setts_add_to_master<-new_settlement_evaluation$checked_setlements %>%
   filter(action==2) %>%
   mutate(
@@ -198,8 +200,8 @@ new_setts_add_to_master<-new_settlement_evaluation$checked_setlements %>%
     DATA_SOURC="AOK",
     IMG_VERIFD= 0
   ) %>% #get coordinates from field data back in
-  left_join(new_sett_county_join %>%
-              st_drop_geometry_keep_coords()) %>%
+  left_join(new_sett_sf %>%
+              st_drop_geometry_keep_coords(), by="uuid") %>%
   filter(!is.na(X)) %>%
   select(NAME,NAMEJOIN,NAMECOUNTY,COUNTYJOIN,DATE,DATA_SOURC,IMG_VERIFD,X,Y)
 
@@ -211,15 +213,17 @@ master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(
 ###########################################
 #ok assume we have imlpemented all cleaning
 ############################################
-aok_clean3<-aok_clean2
+# aok_clean3<-aok_clean2
 iso_date<- Sys.Date() %>%  str_replace_all("-","_")
 #maybe change the way assessment month is represented
 aggregated_file_name<- paste0("outputs/", iso_date,"_reach_ssd_aok_data_analysis_basic_JAN2020_Data.csv")
 
 #next start with the rmeove grouper stuff.
 prev_round<-read.csv("inputs/2020_01/2020_02_13_reach_ssd_aok_clean_data_compiled.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
-debugonce(aggregate_aok_by_county)
-aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round)
+# debugonce(aggregate_aok_by_county)
+source("scripts/functions/aok_aggregate_by_county_wrapped.R")
+# debugonce(aggregate_aok_by_county)
+aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round, current_month = "2020-02-01")
 
 
 

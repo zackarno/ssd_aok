@@ -30,6 +30,11 @@ March 6 2020 it is recommended that this github be forked by the
 responsible GIS/Data Unit Manager and the fork be maintained and
 updated.
 
+The actual procecss is mean to be implemented entirely through the
+script currently labeled **AOK\_cleaning\_aggregating.R** The markdown
+(rmd) file was simple made to create the tutorial and enhance
+documentation.
+
 SETUP
 =====
 
@@ -52,6 +57,7 @@ library(lubridate)
 library(sf)
 source("scripts/functions/aok_aggregation_functions.R")
 source("scripts/functions/aok_cleaning_functions.R")
+source("scripts/functions/aok_aggregate_by_county_wrapped.R")
 ```
 
 INPUTS
@@ -91,7 +97,8 @@ new_sett_sf<-st_as_sf(new_sett,coords=c("long","lat"), crs=4326)
 # LOAD RAW DATA -----------------------------------------------------------
 # aok_raw<-download_aok_data(keys_file = "scripts/functions/keys.R")
 # write.csv(aok_raw,"inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv")
-aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
+# aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200301.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
+aok_raw<-read.csv("inputs/2020_02/2020_02_FEB_AOK_RAW_20200304_from_KOBO.csv", stringsAsFactors = F,na.strings = c("n/a","", ""))
 ```
 
 Cleaning Logs
@@ -288,7 +295,18 @@ new_settlement_evaluation<-evaluate_unmatched_settlements(user= "zack",new_settl
 new_settlement_evaluation$checked_setlements
 new_settlement_evaluation$cleaning_log
 
-# butteR::implement_cleaning_log()
+
+#IN THE ACTUAL SCRIPT IF WHERE THE CLEANING LOG IS CREATED IT WILL BE IMPLEMENTED HERE. HOWEVER SINCE THE CLEAING LOG CANNOT BE CREATED INTERACTIVELY WHEN THE DOCUMENT IS KNIT WE WILL NOT IMPLEMENT THE LOG
+if(nrow(new_settlement_evaluation$cleaning_log>0)){
+aok_clean3<-butteR::implement_cleaning_log(df = aok_clean2,df_uuid = "X_uuid",
+                                           cl =new_settlement_evaluation$cleaning_log ,
+                                           cl_change_type_col = "change_type",
+                                           cl_change_col = "suggested_indicator",
+                                           cl_uuid = "uuid",
+                                           cl_new_val = "suggested_new_value")}
+else{
+  aok_clean3<-aok_clean2
+}
 ```
 
 NEW SETTLEMENT OUTPUTS
@@ -311,6 +329,8 @@ new_settlement_evaluation<-list()
 new_settlement_evaluation$checked_setlements<-settlements_best_guess
 new_settlement_evaluation$checked_setlements$action<-c(1,1,2,2,2)
 #############################################################################
+
+#THIS CLEANING LOG IMPLEMENTATION IS ACTUALLY CORRECT IN THE PREVIOUS PLACEMENT
 
 #put into itemset format
 new_sets_to_add_itemset<-new_settlement_evaluation$checked_setlements %>%
@@ -375,11 +395,63 @@ documentation purposes.
 
 The aggregation relies on functions built many years ago. It is
 recommended that this process be streamlined in the future with a new
-script. However, given time constraints we can continue to use the old
-process since it does work.
+script. However, for the time being I have simply wrapped the entire
+aggregation script inside a function that will be run in this chunk
+(“aok\_aggregate\_by\_county”). This function is literally the same as
+the script that has been used previously for aggregating, but i have
+added some useful prompts/warnings. For example, when the tool changes
+the function will print out which columns are new and have not been
+added to the aggregation script/function. These columns
+(question/choices) need to be added to the appropriate aggregation
+function (i.e aok\_yes,aok\_mode, etc.).
 
 ``` r
-# insert aggregation script here or source it
+###########################################
+#ok assume we have imlpemented all cleaning
+############################################
+aok_clean3<-aok_clean2
+iso_date<- Sys.Date() %>%  str_replace_all("-","_")
+#maybe change the way assessment month is represented
+aggregated_file_name<- paste0("outputs/", iso_date,"_reach_ssd_aok_data_analysis_basic_JAN2020_Data.csv")
+
+#next start with the rmeove grouper stuff.
+prev_round<-read.csv("inputs/2020_01/2020_02_13_reach_ssd_aok_clean_data_compiled.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
+
+
+
+aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round, current_month = "2020-02-01")
+```
+
+    ## [1] "WARNING you missed these: "
+    ## c("start", "end", "A.enumerator_id", "B.survey_start_time", "B.ki_age", 
+    ## "L.food_coping_livelihoods.sell_more_charcoak", "U.market_now_barriers.no_changes", 
+    ## "U.market_now_barriers.communual_violence", "U.market_now_barriers.robberies", 
+    ## "U.market_now_barriers.market_too_far", "U.market_now_barriers.sexual_violence", 
+    ## "U.market_now_barriers.bad_roads", "U.market_now_barriers.flooding_on_way", 
+    ## "U.market_now_barriers_at", "U.market_now_barriers_at.no_changes", 
+    ## "I.health_now.ngo_mobile", "I.facility_stocked", "I.community_healthworkers", 
+    ## "I.health_team", "M.education_level", "M.education_level.secondary_three_four", 
+    ## "M.education_level.primary_six_eight", "M.education_level.primary_one_five", 
+    ## "M.education_level.secondary_one_two", "Q.cash_voucher", "Q.ha_type", 
+    ## "Q.ha_mechanism_settlement", "Q.ha_protection_issues_women", 
+    ## "Q.ha_protection_issues_men", "Q.ha_fear_women", "Q.ha_fear_men", 
+    ## "gps", "Z._gps_latitude", "Z._gps_longitude", "Z._gps_altitude", 
+    ## "Z._gps_precision", "Z.tool_endTime", "LQ_1_remote", "LQ_2_unpopulated", 
+    ## "LQ_3_nohostcommunity", "LQ_4_food_enough_fewmeals", "LQ_5_food_insufficient_manymeals", 
+    ## "LQ_7_food_enough_malnutritiondeath", "LQ_8_food_enough_hungersevere", 
+    ## "LQ_9_cutlivation_yes_land_no", "LQ_10_crops_yes_seedstools_no", 
+    ## "LQ_11_forage_yes_wildfoods_no", "LQ_12_morehalf_wildfood_morethan_3meals", 
+    ## "LQ_13_hunting_source_yes_activity_no", "LQ_14_fishing_source_yes_activity_no", 
+    ## "LQ_15_market_source_yes_access_no", "LQ_16_assist_source_yes_no_distribution", 
+    ## "LQ_17_safe_but_serious_concerns_women", "LQ_18_safe_but_serious_concerns_men", 
+    ## "LQ_19_safe_but_serious_concerns_girls", "LQ_20_safe_but_serious_concerns_boys", 
+    ## "LQ_26_safe_yes_incident_yes", "LQ_21_mainshelter_HC_permanent", 
+    ## "LQ_22_mainshelter_IDP_permanent", "LQ_23_IDP_bush_yes_open_no", 
+    ## "LQ_24_water_borehole_no_borehole", "X__version__", "X_submission_time", 
+    ## "X_index")
+
+``` r
+# write.csv(aok_clean_by_county,aggregated_file_name)
 ```
 
 Once aggregation is completed it should be written to csv. This csv can
