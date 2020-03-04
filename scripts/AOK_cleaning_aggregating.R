@@ -1,7 +1,10 @@
 library(tidyverse)
 library(butteR)
 library(koboloadeR)
+library(lubridate)
+library(sf)
 source("scripts/functions/aok_aggregation_functions.R")
+source("scripts/functions/aok_cleaning_functions.R")
 
 
 admin_gdb<- "../../gis_data/gis_base/boundaries/county_shapefile"
@@ -137,10 +140,18 @@ settlements_best_guess<-new_with_closest_old_vars %>%
 # OUTUT WILL BE A CLEANING LOG (IF THERE ARE CHANGES TO BE MADE)
 new_settlement_evaluation<-evaluate_unmatched_settlements(user= "zack",new_settlement_table = settlements_best_guess)
 
+
 new_settlement_evaluation$checked_setlements
 new_settlement_evaluation$cleaning_log
 
-# butteR::implement_cleaning_log()
+# debugonce(implement_cleaning_log)
+aok_clean3<-butteR::implement_cleaning_log(df = aok_clean2,df_uuid = "X_uuid",
+                                           cl =new_settlement_evaluation$cleaning_log ,
+                                           cl_change_type_col = "change_type",
+                                           cl_change_col = "suggested_indicator",
+                                           cl_uuid = "uuid",
+                                           cl_new_val = "suggested_new_value")
+
 
 # ADD NEW SETTLEMENTS TO NEW ITEMSET  -------------------------------------
 
@@ -195,6 +206,30 @@ new_setts_add_to_master<-new_settlement_evaluation$checked_setlements %>%
 master_new<-bind_rows(list(new_setts_add_to_master,master_settlement %>% mutate(DATE=dmy(DATE))))
 
 #write to csv v 39
+
+
+###########################################
+#ok assume we have imlpemented all cleaning
+############################################
+aok_clean3<-aok_clean2
+iso_date<- Sys.Date() %>%  str_replace_all("-","_")
+#maybe change the way assessment month is represented
+aggregated_file_name<- paste0("outputs/", iso_date,"_reach_ssd_aok_data_analysis_basic_JAN2020_Data.csv")
+
+#next start with the rmeove grouper stuff.
+prev_round<-read.csv("inputs/2020_01/2020_02_13_reach_ssd_aok_clean_data_compiled.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
+debugonce(aggregate_aok_by_county)
+aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round)
+
+
+
+
+
+
+
+
+
+
 
 # THERE ARE CASES WHERE AO CATCHES ERROR IN NEW SETTLEMENT TAB AND THEY HAVE BEEN INSTRUCTED TO MAKE THE CHANGES IN THE CLEANING LOG. THEREFORE, WE SHOULD CHECK THIS. CAN DO THIS BY LOOKING AT THE "CLEANED DATA"
 

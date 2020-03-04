@@ -57,7 +57,8 @@ evaluate_unmatched_settlements<-function(user,new_settlement_table){
 
   }
   cleaning_log1<-new_settlement_table %>%
-    filter(action==1) %>%mutate(#uuid= X_uuid,
+    filter(action==1) %>%mutate(
+      uuid,
       spotted=user,
       change_type="change_response",
       Sectors="Area_of_Knowledge",
@@ -68,9 +69,10 @@ evaluate_unmatched_settlements<-function(user,new_settlement_table){
       suggested_indicator= "D.info_settlement",
       suggested_issue="User chose other when name correct name was available",
       suggested_new_value=mast.settlement) %>%
-    select(spotted:suggested_new_value) #need to add uuid into selection on real data
+    select(uuid:suggested_new_value) #need to add uuid into selection on real data
   cleaning_log2<-new_settlement_table %>%
-    filter(action==1) %>%mutate(#uuid= X_uuid,
+    filter(action==1) %>%mutate(
+      uuid,
       spotted=user,
       change_type="change_response",
       Sectors="Area_of_Knowledge",
@@ -81,7 +83,7 @@ evaluate_unmatched_settlements<-function(user,new_settlement_table){
       suggested_indicator= "D.info_settlement_other",
       suggested_issue="User chose other when name correct name was available",
       suggested_new_value=NA) %>%
-    select(spotted:suggested_new_value) #need to add uuid into selection on real data
+    select(uuid:suggested_new_value) #need to add uuid into selection on real data
 
 
   cleaning_log_combined<-bind_rows(list(get0("cleaning_log1"), get0("cleaning_log2")))
