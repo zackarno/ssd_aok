@@ -25,15 +25,14 @@ SOUTH SUDAN AOK DATA PROCESSING TUTORIAL
 
 This project was developed in January 2020 to automate South Sudan AOK
 data collation and analysis. This document serves as a tutorial for the
-the next Analyst. As this Github will no longer be maintained after
+the next Analyst. As this Git-hub will no longer be maintained after
 March 6 2020 it is recommended that this github be forked by the
 responsible GIS/Data Unit Manager and the fork be maintained and
 updated.
 
-The actual procecss is mean to be implemented entirely through the
-script currently labeled **AOK\_cleaning\_aggregating.R** The markdown
-(rmd) file was simple made to create the tutorial and enhance
-documentation.
+The actual process is mean to be implemented entirely through the script
+currently labeled **AOK\_cleaning\_aggregating.R** The markdown (rmd)
+file was simple made to create the tutorial and enhance documentation.
 
 SETUP
 =====
@@ -269,7 +268,7 @@ the place of the new settlement or not. The user has two options:
     the master settlement should replace the “new settlement” put 1,
     otherwise 2. This file will then need to be read back into the
     script. Additionally, cleaning log entries will need to be added for
-    any record in which a 1 was perscribed to action.
+    any record in which a 1 was prescribed to action.
 
 2.  The preferred option: The code below can be used to interactively
     assess the matched settlements in the R environment. When running
@@ -281,7 +280,7 @@ the place of the new settlement or not. The user has two options:
 
 After cycling through each record, the resulting object is a list of two
 data frames. The first data frame is the same list used as the input
-with the additional column “action” where action=1 means fix dataset
+with the additional column “action” where action=1 means fix data set
 with new settlement and 2 means this is a new settlement. The second
 data frame is the auto-generated cleaning log for all records where the
 user decided to fix the settlement with a settlement from the master
@@ -318,7 +317,7 @@ Interactive functions cannot be used in a knitted document. Therefore,
 to fully understand this functionality the user will have to use this
 code in the R-Script.
 
-For the sake of showing how to produce the new itemset for the odk tool
+For the sake of showing how to produce the new itemset for the ODK tool
 and producing the new master settlement list I will create the action
 column in R and name it appropriately
 
@@ -455,7 +454,7 @@ aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_pre
 ```
 
 Once aggregation is completed it should be written to csv. This csv can
-be binded to the long term data using the long term data aggreation
+be binded to the long term data using the long term data aggregation
 script. The long term data is the input for the Tableau workbook.
 
 ``` r
@@ -466,7 +465,7 @@ Hexagonal Aggregation
 ---------------------
 
 The monthly data should then be aggregated to the hexagonal grid for
-Factsheet maps. The grid has already been created and can simply be
+fact sheet maps. The grid has already been created and can simply be
 loaded.
 
 ``` r
