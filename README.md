@@ -486,8 +486,6 @@ Merge AOK and master settlement list based on concatenated
 county-settlement name vector.
 
 ``` r
-# SPATIALIZE AOK DATA
-# aok_clean3 %>% inner_join(master_new, by="")
 #READ IN HEX GRID
 hex_grid <- st_read(dsn = "inputs/GIS",layer ="Grids_info") %>% 
   mutate( id_grid = as.numeric(rownames(.)))
@@ -532,8 +530,8 @@ grid_summary<-assessed_w_grid %>%
   group_by(NAMECOUNTY,State_id) %>%
   summarise(D.ki_coverage=n()) %>%
   group_by(State_id) %>%
-  summarise(settlement_num=n() ,ki_num=sum(D.ki_coverage) ) #%>%
-  # filter(settlement_num!=ki_num)
+  summarise(settlement_num=n() ,ki_num=sum(D.ki_coverage) ) 
+  
 #Filter Grids with less than 2 KIs
 grid_summary_thresholded <- grid_summary %>% filter(ki_num > 1, settlement_num > 1)
 ```
