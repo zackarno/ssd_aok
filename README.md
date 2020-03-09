@@ -19,6 +19,7 @@
 -   [AGGREATION/ANALYSIS](#aggreationanalysis)
     -   [County Level Aggregation](#county-level-aggregation)
     -   [Hexagonal Aggregation](#hexagonal-aggregation)
+-   [NEXT STEPS](#next-steps)
 
 SOUTH SUDAN AOK DATA PROCESSING TUTORIAL
 ========================================
@@ -418,7 +419,7 @@ prev_round<-read.csv("inputs/2020_01/2020_02_13_reach_ssd_aok_clean_data_compile
 
 
 
-aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round, current_month = "2020-02-01")
+aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round, current_month = month_of_assessment)
 ```
 
     ## [1] "WARNING you missed these: "
@@ -466,8 +467,130 @@ Hexagonal Aggregation
 
 The monthly data should then be aggregated to the hexagonal grid for
 fact sheet maps. The grid has already been created and can simply be
-loaded.
+loaded. I think it might be best if this portion is eventually wrrapped
+into a function. The only things that will change here are potentially
+the questions to be analyzed which can be specified/modified as vector
+which can be used as one of the function arguments.
+
+It is important to note that all hexagons with \>= 2 Ki and \>= 2
+settlements are reported on.
+
+The chunk below does the following uses the master settlment list to add
+coordinates to the AOK data (which does not originally have coordinates)
+and performs a sptial join with the hex grid through the following
+steps. 1. Read in hex grid (in UTM) 2. Convert the newly generated
+master settlement list to a spatial object, transform to UTM (same as
+hex grid), and strip out the important columns. 3. Add date class
+columns to the clean aok data. 4. Join master settlement to grid. 5.
+Merge AOK and master settlement list based on concatenated
+county-settlement name vector.
 
 ``` r
-# insert code here or source script
+# SPATIALIZE AOK DATA
+# aok_clean3 %>% inner_join(master_new, by="")
+#READ IN HEX GRID
+hex_grid <- st_read(dsn = "inputs/GIS",layer ="Grids_info") %>% 
+  mutate( id_grid = as.numeric(rownames(.)))
 ```
+
+    ## Reading layer `Grids_info' from data source `C:\02_REACH_SSD\themes\ssd_aok\inputs\GIS' using driver `ESRI Shapefile'
+    ## Simple feature collection with 2440 features and 9 fields
+    ## geometry type:  POLYGON
+    ## dimension:      XY
+    ## bbox:           xmin: -497964.6 ymin: 375000.2 xmax: 829941.6 ymax: 1387501
+    ## epsg (SRID):    32636
+    ## proj4string:    +proj=utm +zone=36 +datum=WGS84 +units=m +no_defs
+
+``` r
+master_sett_new<-master_new %>%
+  mutate(id_sett = as.numeric(rownames(.))) %>% 
+  st_as_sf(coords=c("X","Y"), crs=4326) %>% 
+  st_transform(crs=st_crs(hex_grid)) %>% 
+  select(NAME:COUNTYJOIN) 
+
+aok_clean3<-aok_clean3 %>%
+  mutate(date=month_of_assessment %>% ymd(),
+         month=month(date),
+         year=year(date),
+         #if we use D.info_settlement_final the others wont match until clean
+         D.settlecounty=paste0(D.info_settlement,D.info_county)) %>%
+  # therefore use D.info_settlement and filter others for tutorial
+  filter(D.info_settlement!="other")
+
+sett_w_grid <- st_join(master_sett_new, hex_grid)
+assessed_w_grid <-inner_join(sett_w_grid, aok_clean3, by = c("NAMECOUNTY"="D.settlecounty") )
+```
+
+Aggregate the data to the hexagon grid-level through the following
+steps: 1. Calculate \# KIs per settlement (D.ki\_coverage) 2. Calculate
+the \# of settlements/grid, and \# KIs/grid 3. Filter out grids with
+less than 2 KIs or Settlements (would be good to have citation for this
+rule).
+
+``` r
+grid_summary<-assessed_w_grid %>%
+  group_by(NAMECOUNTY,State_id) %>%
+  summarise(D.ki_coverage=n()) %>%
+  group_by(State_id) %>%
+  summarise(settlement_num=n() ,ki_num=sum(D.ki_coverage) ) #%>%
+  # filter(settlement_num!=ki_num)
+#Filter Grids with less than 2 KIs
+grid_summary_thresholded <- grid_summary %>% filter(ki_num > 1, settlement_num > 1)
+```
+
+Next we will create composite indicators to analyze at the grid level.
+This may need to be edited to add or remove composite indicators later.
+
+``` r
+#create new composites
+assessed_w_grid_w_composite<-assessed_w_grid %>%
+  mutate(
+    idp_sites= ifelse(J.j2.idp_location=="informal_sites",1,0),
+    IDP_present= ifelse(F.idp_now=="yes",1,0),
+    IDP_time_arrive=  ifelse(F.f2.idp_time_arrive %in% c("1_month","3_month"),1,0),
+    IDP_majority=  ifelse( F.f2.idp_perc %in% c("half","more_half"),1,0),
+    food_inadequate= ifelse(G.food_now == "no", 1,0),
+    less_one_meal = ifelse(G.meals_number %in% c("one", "Less_than_1"),1,0),
+    hunger_severe_worse = ifelse(S.shock_hunger %in% c("hunger_severe", "hunger_worst"),1,0),
+    wildfood_sick_alltime = ifelse(G.food_wild_emergency=="yes"|G.food_wild_proportion=="all",1,0),
+    skipping_days = ifelse(G.food_coping_comsumption.skip_days == "yes",1,0),
+    flooded_shelter = ifelse(J.shelter_flooding == "yes",1,0),
+    fsl_composite = (food_inadequate +less_one_meal+hunger_severe_worse+wildfood_sick_alltime+skipping_days)/5
+  )
+
+#extract new columns added (should be only composite). You can add new composites above and this will still work
+vars_to_avg<-names(assessed_w_grid_w_composite)[!names(assessed_w_grid_w_composite)%in%names(assessed_w_grid)]
+
+analyzed_by_grid<-assessed_w_grid_w_composite %>% 
+  group_by(id_grid, State_id,month,year,date,D.info_state, D.info_county)%>%
+  summarise_at(vars(vars_to_avg),mean, na.rm=T)
+```
+
+Once analyzed you can write the aggreagted data to a csv or left\_join
+it to the original hex data and write it out as a polygon straight for
+mapping.
+
+``` r
+#Filter Grids with less than 2 KIs
+
+analyzed_by_grid_thresholded<-analyzed_by_grid %>%
+  filter(State_id %in% grid_summary_thresholded$State_id)
+
+# write.csv(
+  # analyzed_by_grid_thresholded,
+  # file = paste0(month_of_assessment %>% str_replace_all("-","_"),"_AoK_hex_aggregations.csv"),
+  # na = "NA",
+  # row.names = FALSE)
+
+
+hex_grid_polygon_with_aggregated_data<-hex_grid %>% left_join(analyzed_by_grid_thresholded %>% st_drop_geometry())
+
+# or write it out to a polgon file for mapping
+#using st_write function
+```
+
+NEXT STEPS
+==========
+
+streamline the aok\_by\_county agggregation function so that it does not
+have to be continusly edited.

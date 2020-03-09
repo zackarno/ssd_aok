@@ -92,3 +92,14 @@ evaluate_unmatched_settlements<-function(user,new_settlement_table){
 
   return(output)
 }
+
+aok_to_grid<-function(aok_data, settlement_data, grid_data){
+  aok_data %>%
+    group_by() %>%
+    summarise()
+  aok_settlement_joined<-aok_data %>% left_join(settlement_data)
+
+
+}
+
+
