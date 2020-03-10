@@ -52,16 +52,19 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
 
 
 
-  yes_analysis_added_2020_01<-c("U.market_safety","L.current_activities.pole_selling",
-                                "L.current_activities.livestock", "L.current_activities.remittances",
-                                "L.current_activities.casual_labour", "L.current_activities.crops_for_sustenance",
-                                "L.current_activities.alcohol_brewing","U.market_now_barriers.robbery",
-                                "U.market_now_barriers.SGBV", "U.market_now_barriers.conflict", "U.market_now_barriers_at.marketplace_flooded",
-                                "U.market_now_barriers_at.traders_not_sell", "U.market_now_barriers_at.none",
-                                "U.market_now_barriers_at.marketplace_damaged", "U.market_now_barriers_at.items_quality_low",
-                                "U.market_now_barriers_at.some_items_too_expensive", "U.market_now_barriers_at.other",
-                                "U.market_now_barriers_at.dontknow", "U.market_now_barriers_at.harassment",
-                                "U.market_now_barriers_at.some_items_not_available")
+  yes_analysis_added_2020_02<-c("L.food_coping_livelihoods.sell_more_charcoak", "U.market_now_barriers.no_changes",
+                                "U.market_now_barriers.communual_violence", "U.market_now_barriers.robberies",
+                                "U.market_now_barriers.market_too_far", "U.market_now_barriers.sexual_violence",
+                                "U.market_now_barriers.bad_roads", "U.market_now_barriers.flooding_on_way",
+                                "U.market_now_barriers_at.no_changes",
+                                "I.health_now.ngo_mobile", "I.facility_stocked", "I.community_healthworkers",
+                                "M.education_level.secondary_three_four", "M.education_level.primary_six_eight",
+                                "M.education_level.primary_one_five", "M.education_level.secondary_one_two",
+                                "Q.cash_voucher", "Q.ha_protection_issues_women", "Q.ha_protection_issues_men")
+
+
+
+
 
   aok_yes_cols<-c("D.info_state", "D.info_county", "D.info_settlement", "F.hc_now",
                   "F.idp_now", "F.hcdisp_now", "F.f1.hc_leave", "F.refugee_return_now",
@@ -113,7 +116,16 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
                   "I.health_now.hospital", "I.health_now.maternity_center", "I.health_now.other",
                   "I.health_now.dontknow", "I.health_now.nutrition_center", "I.health_now.ngo_clinic",
                   "K.water_quality", "Q.assistance_now", "Q.most_relevant", "Q.ha_satisfied",
-                  "Q.complaint_awareness", "Q.ha_protection_concern",yes_analysis_added_2020_01)
+                  "Q.complaint_awareness", "Q.ha_protection_concern", "U.market_safety","L.current_activities.pole_selling",
+                  "L.current_activities.livestock", "L.current_activities.remittances",
+                  "L.current_activities.casual_labour", "L.current_activities.crops_for_sustenance",
+                  "L.current_activities.alcohol_brewing","U.market_now_barriers.robbery",
+                  "U.market_now_barriers.SGBV", "U.market_now_barriers.conflict", "U.market_now_barriers_at.marketplace_flooded",
+                  "U.market_now_barriers_at.traders_not_sell", "U.market_now_barriers_at.none",
+                  "U.market_now_barriers_at.marketplace_damaged", "U.market_now_barriers_at.items_quality_low",
+                  "U.market_now_barriers_at.some_items_too_expensive", "U.market_now_barriers_at.other",
+                  "U.market_now_barriers_at.dontknow", "U.market_now_barriers_at.harassment",
+                  "U.market_now_barriers_at.some_items_not_available", yes_analysis_added_2020_02)
 
 
 
@@ -148,7 +160,8 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
 
   ## Let us apply the "aok_mode" function to these set of columns
 
-  mode_cols_added_2020_01<-c("P.malnourished_children_prop","P.malnourished_children_comp")
+  mode_cols_added_2020_02<-c("U.market_now_barriers_at", "Q.ha_type",
+                             "Q.ha_mechanism_settlement", "Q.ha_fear_women","Q.ha_fear_men", "I.health_team")
   # as.character(quote(A.base, D.info_state))
   # as.character(expression(A.base, D.info_state)) %>% dput()
   aok_mode_cols<-c("A.base", "D.info_state", "D.info_county", "D.info_settlement",
@@ -193,8 +206,7 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
                    "L.harvest_perception", "L.harvest_worse", "B.disp_status", "B.interviewed_before",
                    "B.interviewed_last_month", "Q.most_needed_ha", "Q.not_satisfied_reason",
                    "Q.ha_type_acquire", "Q.ha_inkind", "Q.ha_cash", "Q.ha_voucher",
-                   "Q.ha_fear",
-                   mode_cols_added_2020_01)
+                   "Q.ha_fear", "P.malnourished_children_prop","P.malnourished_children_comp", mode_cols_added_2020_02)
 
 
 
@@ -254,7 +266,7 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
 
 
   settlement<-settlement_joined
-  # #Let us rearrange the columns in our database inthe same order appear on the tool
+  # #Let us rearrange the columns in our database in the same order appear on the tool
   settlement <- settlement %>% select(order(match(names(settlement), names(d.f))))
 
   #check missing column names
@@ -291,7 +303,10 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
                          "LE_19_safe_but_serious_concerns_girls", "LE_20_safe_but_serious_concerns_boys",
                          "LE_26_safe_yes_incident_yes", "LE_21_mainshelter_HC_permanent",
                          "LE_22_mainshelter_IDP_permanent", "LE_23_IDP_bush_yes_open_no",
-                         "LE_24_water_borehole_no_borehole", "X_id", "X_uuid")
+                         "LE_24_water_borehole_no_borehole", "X_id", "X_uuid",
+                         "start", "end", "A.enumerator_id", "B.survey_start_time", "B.ki_age",
+                         "gps", "Z._gps_latitude", "Z._gps_longitude", "Z._gps_altitude",
+                         "X__version__", "X_submission_time","X_index", "X_validation_status")
 
 
   check_these<-missing_columns[missing_columns %in% columns_not_needed ==FALSE]
@@ -309,83 +324,100 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
   settlement$B.interviewed_last_month [settlement$B.interviewed_before != "yes"] <- "SL"
 
 
-  ## No host community
+#Population in settlement--------
 
-
+  ## local community in ${info_settlement_final}
   settlement$F.f1.hc_remain_perc[settlement$F.hc_now != "yes"] <- "SL"
   settlement$F.f1.hc_leave[settlement$F.hc_now != "yes"] <- "SL"
-
   settlement$F.f1.hc_leave_time[settlement$F.f1.hc_leave != "yes" | settlement$F.hc_now != "yes"] <- "SL"
   settlement$F.f1.people_leaving[settlement$F.f1.hc_leave != "yes" | settlement$F.hc_now != "yes"] <- "SL"
 
-  ## SKIP LOGIC
-  # The following sets ensure that when data is aggregated to the settlement level, if there are a mix of yes/no, that the consensus response respects the skip logic
-  # if a question is supposd to be skipped after selecting "no" to a previous question, ensure it remains blank
-  # if a question is supposd to be skipped after selecting "yes" to a previous question, ensure it remains blank
-
-  #No HC left
-  #settlement$F.f1.hc_time_leave[settlement$F.f1.hc_leave !="yes"]<- "SL"
-
-
-  ## No IDPs
+  ## IDPs living in ${info_settlement_final}
   settlement$F.f2.idp_perc[settlement$F.idp_now != "yes"] <- "SL"
   settlement$F.f2.idp_push[settlement$F.idp_now != "yes"] <- "SL"
   settlement$F.f2.idp_pull[settlement$F.idp_now != "yes"] <- "SL"
-
   settlement$F.f2.idp_time_arrive[settlement$F.idp_now != "yes"] <- "SL"
-
   settlement$F.f2.idp_source[settlement$F.idp_now != "yes"] <- "SL"
   settlement$F.f2.idp_source_state[settlement$F.idp_now != "yes"] <- "SL"
   settlement$F.f2.idp_source_county[settlement$F.idp_now != "yes"] <- "SL"
 
-  ## No returnees
+  ## former IDPs that have returned to ${info_settlement_final}
   settlement$F.f3.idp_returnees[settlement$F.hcdisp_now != "yes"] <- "SL"
-  settlement$F.f3.idp_sate_returns[settlement$F.hcdisp_now != "yes"] <- "SL"
-  settlement$F.f3.idp_county[settlement$F.hcdisp_now != "yes"] <- "SL"
+  settlement$F.f3.idp_sate_returns[settlement$F.hcdisp_now != "yes" |settlement$F.f3.idp_returnees != "yes"] <- "SL"
+  settlement$F.f3.idp_county[settlement$F.hcdisp_now != "yes" |settlement$F.f3.idp_returnees != "yes"] <- "SL"
   settlement$F.f3.returnee_time_arrived[settlement$F.hcdisp_now != "yes"] <- "SL"
-
-
   settlement$F.f3.idps_returnees_push[settlement$F.hcdisp_now != "yes"] <- "SL"
-
   settlement$F.f3.idp_returnees_pull[settlement$F.hcdisp_now != "yes"] <- "SL"
 
 
-  #No Refugee returnees source
-  settlement$F.f4.refugee_return_source[settlement$F.refugee_return_now!= "yes"] <- "SL"
-  settlement$F.f4.refugee_return_source_country[settlement$F.f4.refugee_return_source != "yes"]<- "SL"
+  #former Refugee that have returned to ${info_settlement_final}
+  settlement$F.f4.refugee_return_source[settlement$F.refugee_return_now != "yes"] <- "SL"
+  settlement$F.f4.refugee_return_source_country[settlement$F.f4.refugee_return_source != "yes" | settlement$F.refugee_return_now != "yes"] <- "SL"
   settlement$F.f4.refugee_return_time_arrive[settlement$F.refugee_return_now!= "yes"] <- "SL"
-
   settlement$F.f4.refugee_returnee_push[settlement$F.refugee_return_now != "yes"] <- "SL"
   settlement$F.f4.refugee_returnees_pull[settlement$F.refugee_return_now != "yes"] <- "SL"
 
+#Food Security----------
 
-
-  ## Yes food
+  settlement$G.food_wild_proportion[settlement$G.food_wild_now != "yes"] <- "SL"
   settlement$G.food_wild_proportion[settlement$G.food_wild_now != "yes"] <- "SL"
 
-  ##Livelihood: bad harvest perception
+
+
+
+#Livelihoods------------
   settlement$L.harvest_worse[settlement$L.harvest_perception != "worse"] <- "SL"
 
 
+#Markets-------------
 
-  ## No health
-  # settlement$I.health_dist[settlement$I.health_now != "yes"] <- "SL"
+  settlement$U.market_where_food[settlement$U.market_now != "yes"] <- "SL"
+  settlement$U.cereal_market_county[settlement$U.market_now != "yes" ] <- "SL"
+  settlement$U.cereal_market_sett[settlement$U.market_now != "yes" ] <- "SL"
 
-  ## Yes health
-  # settlement$I.health_no_reason1[settlement$I.health_now != "no"] <- "SL"
+  settlement$U.market_now_time [settlement$U.market_now != "yes"] <- "SL"
 
-  ## No IDP (protection)
-  settlement$N.comm_relations[settlement$F.idp_now != "yes"] <- "SL"
+  settlement$U.market_where_nfi[settlement$U.market_now != "yes"] <- "SL"
+  settlement$U.nfi_market_county [settlement$U.market_now != "yes"] <- "SL"
+  settlement$U.nfi_market_sett [settlement$U.market_now != "yes"] <- "SL"
 
-  ## Shocks
-  settlement$S.shock_arrival[settlement$F.idp_now != "yes" & settlement$F.hcdisp_now != "yes"] <- "SL"
+
+  U.market_now_barriers_at_cols<-c(settlement %>%ungroup() %>%  select(starts_with("U.market_now_barriers_at")) %>% colnames(),"U.market_now")
+
+  market_component_df<-settlement[,U.market_now_barriers_at_cols]
+  market_component_df<-purrr::map_df(market_component_df, function(x)ifelse(market_component_df$U.market_now!="yes","SL",x))
+  settlement[,colnames(market_component_df)]<-market_component_df
+
+
+
+#Health----------
+
+  settlement$I.health_dist[settlement$I.health_now == "none"] <- "SL"
+  settlement$I.facility_stocked[settlement$I.health_now.phc != "yes"| settlement$I.health_now.pharmarcy == "yes"|settlement$I.health_now.ngo_clinic != "yes"| settlement$I.health_now.maternity_center == "yes" ] <- "SL"
+
+
+#Ebola-------------
+
+  settlement$T.ebola_message[(settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba") | (settlement$B.interviewed_last_month != "no" & settlement$B.interviewed_before != "no")] <- "SL"
+  settlement$T.main_info_source[((settlement$T.ebola_message != "yes") & (settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba") | (settlement$B.interviewed_last_month != "no" & settlement$B.interviewed_before != "no"))] <- "SL"
+  settlement$T.who_provided[((settlement$T.ebola_message != "yes") & (settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba") | (settlement$B.interviewed_last_month != "no" & settlement$B.interviewed_before != "no"))] <- "SL"
+  settlement$T.seek_treatment[(settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba") | (settlement$B.interviewed_last_month != "no" & settlement$B.interviewed_before != "no")] <- "SL"
+
+
+
+
+
+
+#Protection-------------
+
+  settlement$N.comm_relations[settlement$F.idp_now != "yes" |settlement$F.hcdisp_now != "yes"] <- "SL"
+
+#Shocks--------
   settlement$S.shock_hunger[settlement$G.food_now != "no"] <- "SL"
+  settlement$S.shock_arrival[settlement$F.idp_now != "yes" | settlement$F.hcdisp_now != "yes"] <- "SL"
+  settlement$S.shock_protection[settlement$N.prot_incidence != "yes" | settlement$N.prot_looting != "yes"] <- "SL"
 
-  #NOT IN  NEW DATA SET
-  # settlement$S.shock_cerial_price[settlement$U.cerial_price_increase != "yes"] <- "SL"
-  #settlement$S.shock_livestock[settlement$L.livestock_disease != "yes"] <- "SL"
-  settlement$S.shock_protection[settlement$N.prot_incidence != "yes" & settlement$N.prot_looting != "yes"] <- "SL"
-
+#Shelter------------
 
   ## No HC (shelter)
 
@@ -396,14 +428,17 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
 
   settlement$J.j2.idp_shelter_type1[settlement$F.idp_now != "yes"] <- "SL"
   settlement$J.j2.idp_location[settlement$F.idp_now != "yes"] <- "SL"
-  settlement$J.shelter_open_yn[settlement$F.idp_now != "yes"] <- "SL"
-  settlement$J.shelter_open[settlement$J.shelter_open_yn != "yes"] <- "SL"
-
 
 
   #returnees shelter info
   settlement$J.j3.returnee_shelter_type1[settlement$F.hcdisp_now != "yes"] <- "SL"
   settlement$J.j3.returnee_location[settlement$F.hcdisp_now != "yes"] <- "SL"
+
+
+
+  settlement$J.shelter_open_yn[settlement$F.idp_now != "yes"] <- "SL"
+  settlement$J.shelter_open[settlement$J.shelter_open_yn != "yes"] <- "SL"
+
 
   ## No shelter damage
   settlement$J.shelter_destroyed_percent[settlement$J.shelter_damage != "yes"] <- "SL"
@@ -411,51 +446,7 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
 
   settlement$J.nfi_need1[settlement$F.idp_now != "yes"] <- "SL"
 
-
-  ##Markets
-
-  settlement$U.market_where_food[settlement$U.market_now != "yes"] <- "SL"
-  settlement$U.cereal_market_county[settlement$U.market_now != "yes" ] <- "SL"
-  settlement$U.cereal_market_sett[settlement$U.market_now != "yes" ] <- "SL"
-
-  #not in the data
-  # settlement$U.cereal_market_type[settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
-
-
-  settlement$U.market_where_nfi[settlement$U.market_now != "yes"] <- "SL"
-  settlement$U.nfi_market_county [settlement$U.market_now != "yes"] <- "SL"
-  settlement$U.nfi_market_sett [settlement$U.market_now != "yes"] <- "SL"
-
-
-  # settlement$U.nfi_market_type [settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
-
-
-  settlement$U.market_now_time [settlement$U.market_now != "yes"] <- "SL"
-
-  U.market_now_barriers_at_cols<-c(settlement %>%ungroup() %>%  select(starts_with("U.market_now_barriers_at")) %>% colnames(),"U.market_now")
-
-  market_component_df<-settlement[,U.market_now_barriers_at_cols]
-  market_component_df<-purrr::map_df(market_component_df, function(x)ifelse(market_component_df$U.market_now!="yes","SL",x))
-  settlement[,colnames(market_component_df)]<-market_component_df
-
-
-
-
-
-
-  #DOESNT EXIST ANYMORE
-  # settlement$U.cerial_price_increase[settlement$U.market_now != "yes_same" & settlement$U.market_now !=  "yes_other"] <- "SL"
-
-
-
-
-  #Ebola is in town
-
-  settlement$T.ebola_message[settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba"]<- "SL"
-  settlement$T.main_info_source[(settlement$T.ebola_message != "yes") & (settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba")] <- "SL"
-  settlement$T.who_provided[(settlement$T.ebola_message != "yes") & (settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba")] <- "SL"
-  settlement$T.seek_treatment [settlement$A.base != "yambio" & settlement$A.base != "maridi" & settlement$A.base != "juba"]<- "SL"
-
+#Water and Sanitation----------
   ## No boreholes
   settlement$K.water_boreholes_functional[settlement$K.water_boreholes != "yes"] <- "SL"
 
@@ -463,24 +454,32 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
   settlement$K.latrine_usage[settlement$K.latrine_now != "yes"] <- "SL"
   settlement$K.latrine_no_usage[settlement$K.latrine_usage == "more_half" | settlement$K.latrine_usage == "dontknow" | settlement$K.latrine_usage == "NC"| settlement$K.latrine_usage == ""] <- "SL"
 
+#Education------
 
+  ## Education skip logics
 
-  ## No education
+  settlement$M.education_level.primary_one_five[settlement$M.edu_now != "yes"] <- "SL"
+  settlement$M.education_level.primary_six_eight[settlement$M.edu_now != "yes"] <- "SL"
+  settlement$M.education_level.secondary_one_two[settlement$M.edu_now != "yes"] <- "SL"
+  settlement$M.education_level.secondary_three_four[settlement$M.edu_now != "yes"] <- "SL"
 
   settlement$M.edu_no_reason[settlement$M.edu_now != "no"] <- "SL"
 
-
+  settlement$M.edu_boy_attendance[settlement$M.edu_now != "yes"] <- "SL"
   settlement$M.attendance_no_reason1_girls[settlement$M.edu_now != "yes" | settlement$M.edu_girl_attendance == "more_half"] <- "SL"
   settlement$M.attendance_no_reason1_boys[settlement$M.edu_now != "yes" | settlement$M.edu_boy_attendance == "more_half" ] <- "SL"
+  settlement$M.edu_girl_attendance[settlement$M.edu_now != "yes"] <- "SL"
 
+
+
+#CCCM-------
   ## No CCCM
   settlement$R.idp_supported[settlement$F.idp_now != "yes"] <- "SL"
-  #settlement$R.community_leadership_groups[settlement$R.community_leadership != "yes"] <- "SL"
-  #settlement$R.leadership_meetings[settlement$R.community_leadership != "yes"] <- "SL"
+  settlement$R.local_authorities[settlement$F.idp_now != "yes"] <- "SL"
   settlement$R.idp_leadership[settlement$F.idp_now != "yes" | settlement$R.community_leadership != "yes"] <- "SL"
 
 
-
+#Mines-------
   ## No mines/UXOs
   # settlement$O.mine_areas[settlement$O.mines != "yes"] <- "SL"
   settlement$O.mine_areas.housing[settlement$O.mines != "yes"] <- "SL"
@@ -499,7 +498,29 @@ aggregate_aok_by_county<- function(clean_aok_data,aok_previous, current_month){
 
 
 
-  settlement[settlement == ""] <- "NA"
+#AAP-----------
+
+  settlement$Q.most_relevant [settlement$Q.assistance_now != "yes"] <- "SL"
+  settlement$Q.ha_satisfied [settlement$Q.assistance_now != "yes"] <- "SL"
+  settlement$Q.not_satisfied_reason [(settlement$Q.ha_satisfied != "no") | (settlement$Q.assistance_now != "yes")] <- "SL"
+  settlement$Q.cash_voucher[(settlement$D.info_state != "uppernile")] <- "SL"
+  settlement$Q.ha_inkind [settlement$Q.ha_type != "in_kind"] <- "SL"
+  settlement$Q.ha_cash [settlement$Q.ha_type != "cash"] <- "SL"
+  settlement$Q.ha_voucher [settlement$Q.ha_type != "voucher"] <- "SL"
+  settlement$Q.complaint_awareness [settlement$Q.assistance_now != "yes"] <- "SL"
+  settlement$Q.ha_mechanism_settlement[settlement$Q.assistance_now != "yes"] <- "SL"
+  settlement$Q.ha_mechanism_settlement[settlement$Q.assistance_now != "yes"] <- "SL"
+  settlement$Q.ha_protection_issues_women[settlement$Q.assistance_now != "yes"] <- "SL"
+  settlement$Q.ha_protection_issues_men[settlement$Q.assistance_now != "yes"] <- "SL"
+  settlement$Q.ha_fear_women [(settlement$Q.assistance_now != "yes") | (settlement$Q.ha_protection_issues_women != "yes")] <- "SL"
+  settlement$Q.ha_fear_men [(settlement$Q.assistance_now != "yes") | (settlement$Q.ha_protection_issues_men != "yes")] <- "SL"
+
+
+
+
+
+
+  settlement[settlement == ""] <- ""
 
   ## Counting KI coverage per village!
 
