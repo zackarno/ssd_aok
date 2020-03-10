@@ -226,57 +226,100 @@ source("scripts/functions/aok_aggregate_by_county_wrapped.R")
 aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round, current_month = "2020-02-01")
 
 
+## Hexagonal Aggregation
+#READ IN HEX GRID
+hex_grid <- st_read(dsn = "inputs/GIS",layer ="Grids_info") %>%
+  mutate( id_grid = as.numeric(rownames(.)))
+
+master_sett_new<-master_new %>%
+  mutate(id_sett = as.numeric(rownames(.))) %>%
+  st_as_sf(coords=c("X","Y"), crs=4326) %>%
+  st_transform(crs=st_crs(hex_grid)) %>%
+  select(NAME:COUNTYJOIN)
+
+aok_clean3<-aok_clean3 %>%
+  mutate(date=month_of_assessment %>% ymd(),
+         month=month(date),
+         year=year(date),
+         #if we use D.info_settlement_final the others wont match until clean
+         D.settlecounty=paste0(D.info_settlement,D.info_county)) %>%
+  # therefore use D.info_settlement and filter others for tutorial
+  filter(D.info_settlement!="other")
+
+sett_w_grid <- st_join(master_sett_new, hex_grid)
+assessed_w_grid <-inner_join(sett_w_grid, aok_clean3, by = c("NAMECOUNTY"="D.settlecounty") )
+
+
+#Aggregate the data to the hexagon grid-level through the following steps:
+#  1. Calculate # KIs per settlement (D.ki_coverage)
+#  2. Calculate the # of settlements/grid,  and # KIs/grid
+#  3. Filter out grids with less than 2 KIs or Settlements (would be good to have citation for this rule).
+
+
+grid_summary<-assessed_w_grid %>%
+  group_by(NAMECOUNTY,State_id) %>%
+  summarise(D.ki_coverage=n()) %>%
+  group_by(State_id) %>%
+  summarise(settlement_num=n() ,ki_num=sum(D.ki_coverage) )
+
+#Filter Grids with less than 2 KIs
+grid_summary_thresholded <- grid_summary %>% filter(ki_num > 1, settlement_num > 1)
+
+
+#Next we will create composite indicators to analyze at the grid level. This may need to be edited to add or #remove composite indicators later.
+
+
+#create new composites
+assessed_w_grid_w_composite<-assessed_w_grid %>%
+  mutate(
+    idp_sites= ifelse(J.j2.idp_location=="informal_sites",1,0),
+    IDP_present= ifelse(F.idp_now=="yes",1,0),
+    IDP_time_arrive=  ifelse(F.f2.idp_time_arrive %in% c("1_month","3_month"),1,0),
+    IDP_majority=  ifelse( F.f2.idp_perc %in% c("half","more_half"),1,0),
+    food_inadequate= ifelse(G.food_now == "no", 1,0),
+    less_one_meal = ifelse(G.meals_number %in% c("one", "Less_than_1"),1,0),
+    hunger_severe_worse = ifelse(S.shock_hunger %in% c("hunger_severe", "hunger_worst"),1,0),
+    wildfood_sick_alltime = ifelse(G.food_wild_emergency=="yes"|G.food_wild_proportion=="all",1,0),
+    skipping_days = ifelse(G.food_coping_comsumption.skip_days == "yes",1,0),
+    flooded_shelter = ifelse(J.shelter_flooding == "yes",1,0),
+    fsl_composite = (food_inadequate +less_one_meal+hunger_severe_worse+wildfood_sick_alltime+skipping_days)/5
+  )
+
+#extract new columns added (should be only composite). You can add new composites above and this will still work
+vars_to_avg<-names(assessed_w_grid_w_composite)[!names(assessed_w_grid_w_composite)%in%names(assessed_w_grid)]
+
+analyzed_by_grid<-assessed_w_grid_w_composite %>%
+  group_by(id_grid, State_id,month,year,date,D.info_state, D.info_county)%>%
+  summarise_at(vars(vars_to_avg),mean, na.rm=T)
+
+
+
+
+#Once analyzed you can write the aggreagted data to a csv or left_join it to the original hex data and write #it out as a polygon straight for mapping.
+
+
+#Filter Grids with less than 2 KIs
+
+analyzed_by_grid_thresholded<-analyzed_by_grid %>%
+  filter(State_id %in% grid_summary_thresholded$State_id)
+
+# write.csv(
+# analyzed_by_grid_thresholded,
+# file = paste0(month_of_assessment %>% str_replace_all("-","_"),"_AoK_hex_aggregations.csv"),
+# na = "NA",
+# row.names = FALSE)
+
+
+hex_grid_polygon_with_aggregated_data<-hex_grid %>% left_join(analyzed_by_grid_thresholded %>% st_drop_geometry())
+
+# or write it out to a polgon file for mapping
+#using st_write function
 
 
 
 
 
 
-
-
-
-# THERE ARE CASES WHERE AO CATCHES ERROR IN NEW SETTLEMENT TAB AND THEY HAVE BEEN INSTRUCTED TO MAKE THE CHANGES IN THE CLEANING LOG. THEREFORE, WE SHOULD CHECK THIS. CAN DO THIS BY LOOKING AT THE "CLEANED DATA"
-
-# FIRST WE NEED TO COMPILE ALL OF THE NEW SETTLEMENT DATA
-
-
-#will use these...........
-########################################
-
-# butteR::read_all_csvs_in_folder()
-# bind_rows
-
-#for now we can just use these.
-new_sett<-read.csv("cleaning_log/Juba_New_Settlements_Mapping_Feb_2020.csv", stringsAsFactors = FALSE)
-new_sett<-new_sett %>% filter(!is.na(Long))
-
-
-new_settlements_to_check<-new_settlement %>%
-  left_join(aok_data %>%
-              select(X_uuid,D.info_settlement),
-            by="uuid") %>%
-  filter(is.na(D.info_settlement))
-
-
-
-
-
-
-
-
-
-
-
-
-#NOW FOLLOW THE REST OF THE PROCESS.
-
-#IMPLEMENT GENERATED CLEANING LOG - OUTPUT NEW DATA SET.
-
-
-# STEP 3 AGGREGATION ------------------------------------------------------
-
-#aggregation functions are sourced
-# nee to copy code from aok_aggregation jan 2020
 
 
 
