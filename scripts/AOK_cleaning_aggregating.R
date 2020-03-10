@@ -6,13 +6,14 @@ library(sf)
 
 source("scripts/functions/aok_aggregation_functions.R")
 source("scripts/functions/aok_cleaning_functions.R")
-
+source("scripts/functions/aok_aggregate_by_county_wrapped.R")
 
 admin_gdb<- "../../gis_data/gis_base/boundaries/county_shapefile"
 master_settlement<-read.csv("inputs/48_December_2019/SSD_Settlements_V37.csv", stringsAsFactors = FALSE)
 colnames(master_settlement)<-paste0("mast.",colnames(master_settlement))
 master_settlement_sf<- st_as_sf(master_settlement,coords=c("mast.X","mast.Y"), crs=4326)
 
+month_of_assessment<-"2020-02-01"
 
 # LOAD RAW DATA -----------------------------------------------------------
 # aok_raw<-download_aok_data(keys_file = "scripts/functions/keys.R")
@@ -179,9 +180,6 @@ itemset_full_binded<- bind_rows(list(itemset_binded,itemset_other))
 
 
 # NEXT WE ADD THE NEW SETTLEMENTS TO THE SHAPEFILE ------------------------
-library(lubridate)
-month_of_assessment<-"2020-02-01"
-
 
 # add to master file ------------------------------------------------------
 # new_sett<-read.csv("inputs/new_settlements/20200207_New_settlement_Jan2020_ZA.csv", stringsAsFactors = FALSE)
@@ -221,7 +219,7 @@ aggregated_file_name<- paste0("outputs/", iso_date,"_reach_ssd_aok_data_analysis
 #next start with the rmeove grouper stuff.
 prev_round<-read.csv("inputs/2020_01/2020_02_13_reach_ssd_aok_clean_data_compiled.csv", stringsAsFactors = FALSE, na.strings=c("", " ", NA, "NA"))
 # debugonce(aggregate_aok_by_county)
-source("scripts/functions/aok_aggregate_by_county_wrapped.R")
+
 # debugonce(aggregate_aok_by_county)
 aok_clean_by_county<-aggregate_aok_by_county(clean_aok_data = aok_clean3,aok_previous = prev_round, current_month = "2020-02-01")
 
