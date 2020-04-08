@@ -165,6 +165,7 @@ new_sett_sf<-st_as_sf(new_sett,coords=c("long","lat"), crs=4326)
 
 
 
+
 ggplot()+geom_sf(data=adm2)+
   geom_sf_label(data= new_sett_sf,aes(label =D.info_settlement_other))+
   geom_sf(data=new_sett_sf)
@@ -428,9 +429,17 @@ updated_filter <- bind_rows(filter_,filter_file) %>% select(month:assessment_cou
 
 #Settlement data to be used
 
-setttlement_tableau <- st_transform(master_settlement_sf, 32636)
-sf::st_write(setttlement_tableau,"Tableau/Spatial_data/SSD_Settlements.shp")
 
+
+setttlement_tableau <-  master_settlement_sf %>%
+  rename_at(vars(starts_with("mast.")), funs(str_remove(., "mast."))) %>%
+  select(everything(), -X.1)
+
+setttlement_tableau <- sf::st_as_sf(setttlement_tableau, coords=geometry, crs= 4326)
+
+setttlement_tableau <- st_transform(master_settlement_sf, 32636)
+
+sf::st_write(setttlement_tableau,"Tableau/Spatial_data/SSD_Settlements.shp", update=TRUE, driver = "ESRI Shapefile")
 
 
 
