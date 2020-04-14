@@ -99,7 +99,7 @@ check_these<-new_with_closest_old_vars %>%
          ) %>%
   arrange(dist_m,desc(string_proxy))
 
-write.csv(check_these,"outputs/20200207_new_settlements_no_exact_match_to_check.csv")
+# write.csv(check_these,"outputs/20200207_new_settlements_no_exact_match_to_check.csv")
 
 
 

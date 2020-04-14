@@ -49,4 +49,5 @@ vignettes/*.pdf
 /scripts/archived/*
 /scripts/experimental/*
 /scrap/*
+/qgis/*
 .Rproj.user

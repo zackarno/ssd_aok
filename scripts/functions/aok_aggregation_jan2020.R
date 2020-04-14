@@ -31,7 +31,7 @@ df3 %>% tail()
 df3 %>% filter(is.na(A.base))
 # write.csv(df3, "inputs/2020_01/checking_if_AO_messed_up_cols.csv")
 df3<-df3 %>% select(A.base:X_index)
-
+write.csv(df3, "outputs/reach_bgd_clean_aok_data_compiled.csv")
 
 
 

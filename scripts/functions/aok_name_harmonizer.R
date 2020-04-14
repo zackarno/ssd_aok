@@ -45,6 +45,13 @@ if(class(ao_new_settlements$X)!="numeric"|class(ao_new_settlements$Y)!="numeric"
 
 }
 
+
+
+
+
+
+
+
 # wrapper to create clean strings
 simplify_clean_string<-function(string){
   string %>% gsub("[[:punct:]]","",.) %>%
@@ -106,7 +113,22 @@ check_ao_table_against_kobo_data<-function(aok_monthly_data, ao_new_settlements,
 
 
 }
+df_to_cl<- function(df,user,uuid, change_type, suggested_indicator, suggested_issue, suggested_current_value){
+  df %>%
+    mutate(uuid=!!sym(uuid),
+           user=user,
+           change_type="change_response",
+           indicator="",
+           current_value="",
+           new_value="",
+           issue="",
+           suggested_indicator=suggested_indicator,
+           suggested_issue=suggested_issue,
+           suggested_current_value=!!sym(suggested_current_value)
+    ) %>% return()}
 
+
+}
 
 
 aok_name_harmonizer1<- function(aok_monthly_data,
