@@ -9,7 +9,7 @@ source("scripts/functions/aok_cleaning_functions.R")
 source("scripts/functions/aok_aggregate_by_county_wrapped.R")
 
 admin_gdb<- "../../gis_data/gis_base/boundaries/county_shapefile"
-master_settlement<-read.csv("inputs/48_December_2019/SSD_Settlements_V37.csv", stringsAsFactors = FALSE)
+master_settlement<-read.csv("inputs/48_December_2019/SSD_Settlements_V38.csv", stringsAsFactors = FALSE)
 colnames(master_settlement)<-paste0("mast.",colnames(master_settlement))
 master_settlement_sf<- st_as_sf(master_settlement,coords=c("mast.X","mast.Y"), crs=4326)
 
